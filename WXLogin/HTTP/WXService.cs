@@ -317,7 +317,8 @@ namespace WXLogin
 
             if (sid != null && uin != null)
             {
-                BaseService.SendPostRequest(url, $"sid={sid}&uin={uin}");
+                byte[] bytes = BaseService.SendPostRequest(url, $"sid={sid.Value}&uin={uin.Value}",true);
+                string send_result = Encoding.UTF8.GetString(bytes);
             }
         }
         /// <summary>

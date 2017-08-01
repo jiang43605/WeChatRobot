@@ -20,7 +20,7 @@
         </Style>
     </Window.Resources>
     <Grid>
-        <Grid x:Name="loginInfo" Visibility="Hidden">
+        <Grid x:Name="loginInfo" Visibility="Visible">
             <Grid.RowDefinitions>
                 <RowDefinition Height="500"/>
                 <RowDefinition Height="1"/>
@@ -30,7 +30,7 @@
             <Rectangle Grid.Row="1" Fill="Gray" Margin="10 0"></Rectangle>
             <Label x:Name="loginLable" Grid.Row="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontWeight="Bold" Foreground="Gray"></Label>
         </Grid>
-        <Grid x:Name="setPanel" Visibility="Visible">
+        <Grid x:Name="setPanel" Visibility="Hidden">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="1"/>

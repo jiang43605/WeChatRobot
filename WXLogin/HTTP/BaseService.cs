@@ -63,7 +63,7 @@ namespace WXLogin
         /// <param name="url"></param>
         /// <param name="body"></param>
         /// <returns></returns>
-        public static byte[] SendPostRequest(string url, string body)
+        public static byte[] SendPostRequest(string url, string body, bool AllowAutoRedirect = false)
         {
             try
             {
@@ -72,6 +72,7 @@ namespace WXLogin
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "post";
                 request.ContentLength = request_body.Length;
+                request.AllowAutoRedirect = AllowAutoRedirect;
 
                 Stream request_stream = request.GetRequestStream();
 
