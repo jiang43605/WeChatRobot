@@ -1,3 +1,5 @@
+![](https://img.shields.io/vso/build/chengf/b9824529-b4f9-4719-88cb-bc010f5991ae/7.svg) 
+
 ## 微信机器人
 
 > 用于自动回复，定时发送，对接AI机器人等，运行在window平台下的可视化程序，主要是自用，项目写的较为简陋，因此，可能在使用时可能有一些莫名的异常。。。如果你在使用且不走运的遇到bug，请自己修复。。。不过大体还是能运行正常的。
@@ -7,6 +9,9 @@
 模拟网页微信Http过程，参照了：<https://github.com/sherlockchou86/WeChat.NET>，在他的基础上略微修改了一下，独立成`WXLogin`项目
 
 ### 使用说明
+
+直接运行：Bin\WxRobot.exe  
+查看插件效果：在`PowerShell`下运行`Bin\WxRobot.exe plugin`
 
 界面主要有4个功能区域
 
