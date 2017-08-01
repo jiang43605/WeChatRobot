@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="Intervals.DialogWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Intervals"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+    </UserControl.Resources>
+    <Grid>
+        <CheckBox x:Name="autoCheckBox" Click="autoCheckBox_Click" Content="开启自动回复" HorizontalAlignment="Left" Margin="33,60,0,0" VerticalAlignment="Top"/>
+        <Label Content="间隔回复" HorizontalAlignment="Left" Margin="21,10,0,0" VerticalAlignment="Top"/>
+        <Label Content="间隔秒数：" HorizontalAlignment="Left" Margin="33,93,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="autoTime" HorizontalAlignment="Left" Height="23" Margin="108,93,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+        <Label Content="回复内容：" HorizontalAlignment="Left" Margin="33,134,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="autoContent" HorizontalAlignment="Left" Height="23" Margin="108,134,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+        <Rectangle Fill="Gray" HorizontalAlignment="Left" Margin="0,192,0,0" Stroke="Black" VerticalAlignment="Top" Width="300"/>
+        <CheckBox x:Name="intervalCheckBox" Click="intervalCheckBox_Click" Content="开启间隔发送消息" HorizontalAlignment="Left" Margin="33,226,0,0" VerticalAlignment="Top"/>
+        <Label Content="间隔秒数：" HorizontalAlignment="Left" Margin="33,259,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="intervalTime" HorizontalAlignment="Left" Height="23" Margin="108,259,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+        <Label Content="回复内容：" HorizontalAlignment="Left" Margin="33,300,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="intervalContent" HorizontalAlignment="Left" Height="23" Margin="108,300,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+    </Grid>
+</UserControl>

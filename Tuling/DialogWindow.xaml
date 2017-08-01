@@ -1,0 +1,36 @@
+﻿<UserControl x:Class="Tuling.DialogWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Tuling"
+             mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="linkLable" TargetType="Label">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="Blue"></Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"></Setter>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+        </Style>
+    </UserControl.Resources>
+    <Grid>
+        <GroupBox Header="时间设置" HorizontalAlignment="Left" Height="106" Margin="21,40,0,0" VerticalAlignment="Top" Width="313"/>
+        <GroupBox Header="词替换" HorizontalAlignment="Left" Height="224" Margin="21,172,0,0" VerticalAlignment="Top" Width="313"/>
+        <Label Content="图灵ApiKey：" Style="{StaticResource linkLable}" HorizontalAlignment="Left" Margin="21,10,0,0" VerticalAlignment="Top" ToolTip="点击调转图灵官网申请Key" Cursor="Hand" MouseLeftButtonUp="Label_MouseLeftButtonUp"/>
+        <TextBox x:Name="print" HorizontalAlignment="Left" IsReadOnly="True" VerticalContentAlignment="Top" Height="137" Margin="32,246,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="286"/>
+        <TextBox x:Name="source" HorizontalAlignment="Left" Height="23" Margin="32,208,0,0" Text="" VerticalAlignment="Top" Width="73"/>
+        <Label Content="=》" HorizontalAlignment="Left" Margin="119,207,0,0" VerticalAlignment="Top" Height="23"/>
+        <TextBox x:Name="target" HorizontalAlignment="Left" Height="23" Margin="155,208,0,0"  Text="" VerticalAlignment="Top" Width="73"/>
+        <Button x:Name="add" Content="+" HorizontalAlignment="Left" Margin="243,207,0,0" VerticalAlignment="Top" Width="75" Height="22" Click="add_Click"/>
+        <TextBox x:Name="time" HorizontalAlignment="Left" Height="23" Margin="100,72,0,0" Text="0" VerticalAlignment="Top" Width="182"/>
+        <Label Content="延迟发送：" HorizontalAlignment="Left" Margin="30,70,0,0" VerticalAlignment="Top"/>
+        <Label Content="秒" HorizontalAlignment="Left" Margin="287,72,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="isRandom" Content="在指定时间内随机生成一个时间量" HorizontalAlignment="Left" Margin="37,109,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="apiKey" HorizontalAlignment="Left" Height="23" Margin="107,10,0,0" Text="" VerticalAlignment="Top" Width="182"/>
+    </Grid>
+</UserControl>

@@ -1,0 +1,1157 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Chengf</name>
+    </assembly>
+    <members>
+        <member name="T:Chengf.HttpMethod">
+            <summary>
+            设置要请求的方法
+            </summary>
+        </member>
+        <member name="F:Chengf.HttpMethod.POST">
+            <summary>
+            Post
+            </summary>
+        </member>
+        <member name="F:Chengf.HttpMethod.GET">
+            <summary>
+            Get
+            </summary>
+        </member>
+        <member name="T:Chengf.Enum.StringMatchModel">
+            <summary>
+            要使用的字符串匹配模式
+            Regex表示使用正则去匹配
+            Common表示直接使用string基础类分析
+            在不同的场景下性能不一样
+            </summary>
+        </member>
+        <member name="F:Chengf.Enum.StringMatchModel.Regex">
+            <summary>
+            正则匹配
+            </summary>
+        </member>
+        <member name="F:Chengf.Enum.StringMatchModel.Common">
+            <summary>
+            一般匹配
+            </summary>
+        </member>
+        <member name="T:Chengf.Enum.ExtractStringModel">
+            <summary>
+            提取的字符串的模式
+            包括开头和结尾或者不包括
+            </summary>
+        </member>
+        <member name="F:Chengf.Enum.ExtractStringModel.IncludeQH">
+            <summary>
+            包括开头和结尾
+            </summary>
+        </member>
+        <member name="F:Chengf.Enum.ExtractStringModel.NoIncludeQH">
+            <summary>
+            不包括开头和结尾
+            </summary>
+        </member>
+        <member name="T:Chengf.HttpWebOutputValue">
+            <summary>
+            Cf_HttpWeb的返回值
+            </summary>
+        </member>
+        <member name="M:Chengf.HttpWebOutputValue.Finalize">
+            <summary>
+            析构
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebOutputValue.CookieValue">
+            <summary>
+            返回的字符串cookie值
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebOutputValue.HtmlValue">
+            <summary>
+            返回的网页内容
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebOutputValue.CookieList">
+            <summary>
+            返回的Cookie的集合
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebOutputValue.StreamValue">
+            <summary>
+            返回的Stream流
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebOutputValue.Bytes">
+            <summary>
+            获得网络流的字节数组
+            </summary>
+        </member>
+        <member name="M:Chengf.HttpWebOutputValue.Dispose">
+            <summary>
+            释放资源
+            </summary>
+        </member>
+        <member name="T:Chengf.HttpWebParameter">
+            <summary>
+            作为Cf_HttpWeb类必不可少的参数
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebParameter.Cookie">
+            <summary>
+            获取或设置作为string的cookie参数
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebParameter.StreamParameter">
+            <summary>
+            获取或设置传入流的参数
+            </summary>
+        </member>
+        <member name="P:Chengf.HttpWebParameter.CookieCollectionParameter">
+            <summary>
+            获取或设置以CookieCollection为cookie容器的参数
+            </summary>
+        </member>
+        <member name="T:Chengf.Baidu_SongRequest">
+            <summary>
+            通过一定的设置，从Baidu获取歌曲的下载地址
+            </summary>
+        </member>
+        <member name="P:Chengf.Baidu_SongRequest.BaiDu_UserName">
+            <summary>
+            对BaiDu帐号设置，如果不设则采用默认值（注意必须要与相应的密码搭配）
+            </summary>
+        </member>
+        <member name="P:Chengf.Baidu_SongRequest.BaiDu_PassWord">
+            <summary>
+            对BaiDu密码设置，如果不设则采用默认值（注意必须要与相应的帐号搭配）
+            </summary>
+        </member>
+        <member name="P:Chengf.Baidu_SongRequest.BaiDu_LoginCookie">
+            <summary>
+            获取或设置BaiDu的登录Cookie
+            </summary>
+        </member>
+        <member name="M:Chengf.Baidu_SongRequest.currenttime">
+            <summary>
+            返回一个当前距1970的毫秒数字符串
+            </summary>
+            <returns>返回一个当前距1970的毫秒数字符串</returns>
+        </member>
+        <member name="M:Chengf.Baidu_SongRequest.BaiDu_YangZhengMaHuoQu">
+            <summary>
+            获取Baidu验证码链接地址
+            </summary>
+            <returns>返回一个Baidu验证码的http连接地址字符串</returns>
+        </member>
+        <member name="M:Chengf.Baidu_SongRequest.BaiDu_Cookie">
+            <summary>
+            用于获取BaiDu最终LoginCookie用于下载歌曲,前提是需要获取验证码
+            </summary>
+            <returns>返回一个值指示否成功获取到，获取到则为true,否则为false</returns>
+        </member>
+        <member name="M:Chengf.Baidu_SongRequest.BaiDu_SongListHuoQu(System.String)">
+            <summary>
+            输入歌曲名，获得一个歌曲下载列表
+            </summary>
+            <param name="SongName">歌曲名</param>
+            <returns>包含歌曲下载地址，歌曲名，歌手</returns>
+        </member>
+        <member name="T:Chengf.Cf_Excel">
+            <summary>
+            Excel操作类
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_Excel.ToDataTable(System.String)">
+            <summary>
+            读取Excel文件到DataSet中
+            </summary>
+            <param name="filePath">文件路径</param>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.Cf_Expand">
+            <summary>
+            各种其他功能
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_Expand.MSKeyProduct">
+            <summary>
+            针对微软密匙特征，随机产生一组5位长度的字符串
+            </summary>
+            <returns>产生的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_Expand.FormatTime(System.Int32)">
+            <summary>
+            针对时间进行格式化
+            </summary>
+            <param name="num"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.Cf_HotKey">
+            <summary>
+            直接构造类实例即可注册
+                         自动完成注销
+                         注意注册时会抛出异常
+                         注册系统热键类
+                         热键会随着程序结束自动解除,不会写入注册表
+            
+            </summary>
+        </member>
+        <member name="E:Chengf.Cf_HotKey.OnHotKey">
+            <summary>
+            热键事件
+            
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_HotKey.#ctor(System.Windows.Window,Chengf.Cf_HotKey.KeyFlags,System.Windows.Forms.Keys)">
+            <summary>
+            构造函数
+            
+            </summary>
+            <param name="win">注册窗体</param><param name="control">控制键</param><param name="key">主键</param>
+        </member>
+        <member name="T:Chengf.Cf_HotKey.OnHotKeyEventHandler">
+            <summary>
+            热键事件委托
+            
+            </summary>
+        </member>
+        <member name="T:Chengf.Cf_HotKey.KeyFlags">
+            <summary>
+            控制键编码
+            
+            </summary>
+        </member>
+        <member name="T:Chengf.Cf_HttpWeb">
+            <summary>
+            用于获取Http网页内容的类
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.Accpet">
+            <summary>
+            设置Accpet标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.Connection">
+            <summary>
+            设置Connection标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.ContentType">
+            <summary>
+            设置ContentType标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.Expect">
+            <summary>
+            设置Expect标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.KeepAlive">
+            <summary>
+            设置KeepAlive标头,默认为true
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.MediaType">
+            <summary>
+            设置MediaType标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.Referer">
+            <summary>
+            设置Referer标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.Timeout">
+            <summary>
+            设置Timeout标头,默认为10000毫秒
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.TransferEncoding">
+            <summary>
+            设置TransferEncoding标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.UserAgent">
+            <summary>
+            设置UserAgent标头,默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.ProtocolVersion">
+            <summary>
+            设置ProtocolVersion标头,默认为1.1
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.UserDate">
+            <summary>
+            设置UserDate标头,即当方法为POST时，需要传递的用户数据，默认为null
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.EncodingSet">
+            <summary>
+            设置EncodingSet标头，默认为GBK，仅需设置一次
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.HeaderSet">
+            <summary>
+            通过直接的字符串对指定的标头赋值，格式为"key,value"
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.HttpCookieContainer">
+            <summary>
+            获取或设置Cookie容器
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.AllowAutoRedirect">
+            <summary>
+            设置是否跟随连接进行重定向
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_HttpWeb.HeaderAdd">
+            <summary>
+            添加HeaderAdd的一个容器
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.HttpConnection(System.String,Chengf.HttpMethod,Chengf.HttpWebParameter,System.Boolean,System.String)">
+            <summary>
+            创建一个http协议的连接，headtocookiecontaniner指示是否在添加cookie时转换到cookiecontaniner，默认为false表示不转换，否则为true，cookie为添加的值，它们需要一起使用
+            </summary>
+            <param name="uri">URI地址</param>
+            <param name="method">为可选的枚举</param>
+            <param name="httpwebparameter">可选参数</param>
+            <param name="headtocookiecontaniner">指示是否在添加cookie时转换到cookiecontaniner</param>
+            <param name="addcookie">添加的值</param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGet(System.String,Chengf.HttpMethod,System.Net.CookieContainer)">
+            <summary>
+            用指定的方法从指定的地址获取该地址返回的Cookie以及网页Responed
+            </summary>
+            <param name="method">为"POST"或者"GET"</param>
+            <param name="uri">指定的Url地址</param>
+            <param name="cookiecontanier">传入已经存在的Cookie,如果无则:new CookieContainer()</param>
+            <returns>返回一个ArrayList对象，索引为0的值为Cookie值，索引为1的值为指定地址网页的内容</returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.CPostOrGet(System.String,Chengf.HttpMethod)">
+            <summary>
+            使用cookiecontanier进行自动Cookie填充的请求方法
+            </summary>
+            <param name="uri"></param>
+            <param name="method"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.CPostOrGet(System.String,Chengf.HttpMethod,System.String)">
+            <summary>
+            使用cookiecontanier进行自动Cookie填充的请求方法，同时在容器中增加一个string类型的cookie
+            </summary>
+            <param name="uri"></param>
+            <param name="method"></param>
+            <param name="cookie"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGetCheck(System.String,Chengf.HttpMethod,System.Net.CookieContainer)">
+            <summary>
+            从指定Url处返回图形格式流
+            </summary>
+            <param name="uri">指定的图形所在的地址</param>
+            <param name="method">指定获取的方式，一般为GET</param>
+            <param name="myCookieContainer">传入已经存在的Cookie,如果无则:new CookieContainer()</param>
+            <returns>返回一个ArryList动态数组，返回的Cookie存在索引位置0，图片存在索引位置1</returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGet(System.String,Chengf.HttpMethod,System.String)">
+            <summary>
+            用指定的方法从指定的地址获取该地址返回的Cookie以及网页Responed，不使用CookieContaniner自动提供cookie
+            </summary>
+            <param name="method">为"POST"或者"GET"</param>
+            <param name="uri">指定的Url地址</param>
+            <param name="cookie">以字串的形式传入Cookie值</param>
+            <returns>返回一个string集合对象，索引为0的值为Cookie值，索引为1的值为指定地址网页的内容</returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGet(System.String,Chengf.HttpMethod)">
+            <summary>
+            用指定的方法从指定的地址获取该地址返回的Cookie以及网页Responed，不使用CookieContaniner自动提供cookie
+            </summary>
+            <param name="method">为"POST"或者"GET"</param>
+            <param name="uri">指定的Url地址</param>
+            <returns>返回一个string集合对象，索引为0的值为Cookie值，索引为1的值为指定地址网页的内容</returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGet(System.String,Chengf.HttpMethod,System.IO.Stream)">
+            <summary>
+            支持发送Stream类型的Post方法，默认使用CookieContaniner自动提供cookie
+            </summary>
+            <param name="uri"></param>
+            <param name="method"></param>
+            <param name="stream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGet(System.String,Chengf.HttpMethod,System.String,System.IO.Stream)">
+            <summary>
+            支持发送Stream类型的Post方法，默认使用CookieContaniner自动提供cookie
+            </summary>
+            <param name="uri"></param>
+            <param name="method"></param>
+            <param name="cookie"></param>
+            <param name="stream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGetCheck(System.String,Chengf.HttpMethod,System.String)">
+            <summary>
+            从指定Url处返回图形格式流
+            </summary>
+            <param name="uri">指定的图形所在的地址</param>
+            <param name="method">指定获取的方式，一般为GET</param>
+            <param name="cookie">传入已经存在的Cookie，要求的类型为string</param>
+            <returns>返回一个string集合对象，返回的Cookie存在索引位置0，图片存在索引位置1</returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.PostOrGetCheck(System.String,Chengf.HttpMethod)">
+            <summary>
+            从指定Url处返回图形格式流
+            </summary>
+            <param name="uri">指定的图形所在的地址</param>
+            <param name="method">指定获取的方式，一般为GET</param>
+            <returns>返回一个string集合对象，返回的Cookie存在索引位置0，图片存在索引位置1</returns>
+        </member>
+        <member name="M:Chengf.Cf_HttpWeb.Clear">
+            <summary>
+            将所有的设置清除
+            </summary>
+        </member>
+        <member name="T:Chengf.Cf_IO">
+            <summary>
+            IO操作类
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_IO.GetDirectorySizeName(System.String)">
+            <summary>
+            获取指定目录的大小（已格式化为string）
+            </summary>
+            <param name="path"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_IO.GetDirectorySize(System.String)">
+            <summary>
+            获取某一目录的double类型大小
+            </summary>
+            <param name="path"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_IO.FormatSize(System.Double)">
+            <summary>        
+            将Size格式化为具体的单位
+            </summary>
+            <param name="Size"></param>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.Cf_Record">
+            <summary>
+            用于记录信息
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_Record.Path">
+            <summary>
+            设置文件路径
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_Record.Newenconding">
+            <summary>
+            设置编码方式
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_Record.#ctor(System.String)">
+            <summary>
+            构造函数，设定path初始值
+            </summary>
+            <param name="path_1">路径值</param>
+        </member>
+        <member name="M:Chengf.Cf_Record.BugLoggin(System.String,System.Boolean)">
+            <summary>
+            将一段字符串写入到指定文本
+            </summary>
+            <param name="body">要写入的字符串</param>
+            <param name="isrecordtime">是否加入当前时间</param>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.MailMode">
+            <summary>
+            发送邮件的方式，Gmail和其它不一样
+            </summary>
+        </member>
+        <member name="F:Chengf.MailMode.Gmail">
+            <summary>
+            使用Gmail方式
+            </summary>
+        </member>
+        <member name="F:Chengf.MailMode.Other">
+            <summary>
+            使用其他的邮件方式        
+            </summary>
+        </member>
+        <member name="T:Chengf.Cf_SendMail">
+            <summary>
+            发送邮件
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.MailMode">
+            <summary>
+            邮箱发送方式
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.mailFrom">
+            <summary>
+            发送者
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.mailToArray">
+            <summary>
+            收件人
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.mailCcArray">
+            <summary>
+            抄送
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.mailSubject">
+            <summary>
+            标题
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.mailBody">
+            <summary>
+            正文
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.mailPwd">
+            <summary>
+            发件人密码
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.host">
+            <summary>
+            SMTP邮件服务器
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.isbodyHtml">
+            <summary>
+            正文是否是html格式
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_SendMail.attachmentsPath">
+            <summary>
+            附件
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_SendMail.Send">
+            <summary>
+            发送  
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.Cf_SpeechAndTextTransform">
+            <summary>
+            文字和语言转化类
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_SpeechAndTextTransform.SpeechOfText(System.String)">
+            <summary>
+            异步文字转换为语音
+            </summary>
+            <param name="text">要转换的文字</param>
+            <returns>返回一个指示值，true支持转换成功，false指示失败</returns>
+        </member>
+        <member name="T:Chengf.Cf_String">
+            <summary>
+            处理字符串的类
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_String.SubMatchString(System.String,System.String,System.String)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的第一个匹配项提取出来，stringname为空或者未找到匹配的则返回null，
+            （提取的字符串包括开头和结尾）
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <returns>获取到的第一个匹配项</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.SubMatchStringNoQH(System.String,System.String,System.String)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的第一个匹配项提取出来，stringname为空或者未找到匹配的则返回null，
+            （提取的字符串不包括开头和结尾）
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <returns>获取到的第一个匹配项</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.ExtractString(System.String,System.String,System.String,Chengf.Enum.StringMatchModel)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，匹配模式默认为Common
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <param name="matchModel">获取的匹配模式</param>
+            <returns>以字符串数组返回提取的所有符合要求的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.ExtractString(System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，并通过确定bool值来决定是否将得到的字符串顺序反转
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <param name="ReverseBool">决定是否将得到的字符串顺序反转，true为反转，默认为false</param>
+            <returns>以字符串数组返回提取的所有符合要求的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.ExtractStringNoQH(System.String,System.String,System.String,Chengf.Enum.StringMatchModel)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，提取出来的字符串中不包括开头和结尾，匹配模式默认为Common
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <param name="matchModel">获取的匹配模式</param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_String._ExtractString(System.String,System.String,System.String,System.Boolean,Chengf.Enum.ExtractStringModel,Chengf.Enum.StringMatchModel)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，匹配模式默认为Common，并通过确定bool值来决定是否将得到的字符串顺序反转，
+            ExtractStringModel决定获取到的字符串是否包含开头和结尾
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <param name="ReverseBool">决定是否将得到的字符串顺序反转，true为反转，默认为false</param>
+            <param name="extractStringModel">字符串匹配模式，即是否包括开头和结尾</param>
+            <param name="matchModel">获取的匹配模式</param>
+            <returns>以字符串数组返回提取的所有符合要求的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.DeleteSpecificString(System.String,System.String,System.String)">
+            <summary>
+            删除指定字符串里面所有开头和结尾匹配的字符串（删除包括开头和结尾）
+            </summary>
+            <param name="stringname">传入的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的字符串</param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_String.DeleteSpecificStringNoQH(System.String,System.String,System.String)">
+            <summary>
+            删除指定字符串里面所有开头和结尾匹配的字符串（删除不会包括开头和结尾）
+            </summary>
+            <param name="stringname">传入的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的字符串</param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_String.Reverse(System.String)">
+            <summary>
+            将字符串反转
+            </summary>
+            <param name="stringname">要反转的字符串</param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_String.LastExtractString(System.String,System.String,System.String)">
+            <summary>
+            从末尾将stringname中符合开头为startString结尾为endString的都提取出来
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <returns>以字符串数组返回提取的所有符合要求的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.ListRemove(System.Collections.Generic.List{System.String},System.Int32,System.Int32)">
+            <summary>
+            Remove方法用于List,从指定位置删除指定的字符
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <param name="count">移除的指定字符数</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.ListRemove(System.Collections.Generic.List{System.String},System.Int32)">
+            <summary>
+            Remove方法用于List，删除从指定位置到最后位置的所以字符
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.ListExtractString(System.Collections.Generic.List{System.String},System.String,System.String)">
+            <summary>
+            Remove方法配合字符串检索用于List,从指定位置提取指定的前后字符相匹配的字符串
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="start">开始相匹配的字符串</param>
+            <param name="end">结束相匹配的字符串</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.LastListRemove(System.Collections.Generic.List{System.String},System.Int32,System.Int32)">
+            <summary>
+            Remove方法用于List,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <param name="count">移除的指定字符数</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.LastListRemove(System.Collections.Generic.List{System.String},System.Int32)">
+            <summary>
+            Remove方法用于List,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.LastStringRemove(System.String,System.Int32,System.Int32)">
+            <summary>
+            Remove方法用于string,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String</param>
+            <param name="index">开始的位置</param>
+            <param name="count">移除的指定字符数</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_String.LastStringRemove(System.String,System.Int32)">
+            <summary>
+            Remove方法用于string,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String</param>
+            <param name="index">开始的位置</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="T:Chengf.MultipleThreadToDataCallBack">
+            <summary>
+            使用多线程对List泛型开始或结束时的回调委托
+            </summary>
+        </member>
+        <member name="T:Chengf.DataManage`1">
+            <summary>
+            具体实现数据解析的方法
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="data"></param>
+            <param name="index"></param>
+        </member>
+        <member name="T:Chengf.Cf_UserMultipleThreadToData">
+            <summary>
+            开启多线程加速对List泛型的操作
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_UserMultipleThreadToData.Abortthreads">
+            <summary>
+            是否终止所有线程的运行
+            </summary>
+        </member>
+        <member name="E:Chengf.Cf_UserMultipleThreadToData.BeginThread">
+            <summary>
+            开始多线程加速时
+            </summary>
+        </member>
+        <member name="E:Chengf.Cf_UserMultipleThreadToData.FinishThread">
+            <summary>
+            多线程结束后
+            </summary>
+        </member>
+        <member name="P:Chengf.Cf_UserMultipleThreadToData.Threadnum">
+            <summary>
+            获取或设置要用来加速的多线程数量
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_UserMultipleThreadToData.StopThreads">
+            <summary>
+            终止所有运行的线程
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_UserMultipleThreadToData.RunMultipleThreadToList``1(System.Collections.Generic.List{``0},Chengf.DataManage{``0})">
+            <summary>
+            以多线程对List泛型进行加速操作
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="list"></param>
+            <param name="datamange"></param>
+        </member>
+        <member name="M:Chengf.Cf_UserMultipleThreadToData.RunMultipleThreadToIEnumerable``1(System.Collections.Generic.IEnumerable{``0},Chengf.DataManage{``0})">
+            <summary>
+            以多线程对集合类型进行加速操作
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="list"></param>
+            <param name="datamange"></param>
+        </member>
+        <member name="T:Chengf.Cf_Web">
+            <summary>
+            网络的一些相关类
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_Web.IsConnectedToInternet">
+            <summary>
+            检测网络是否联网，联网则返回true,否则返回false
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.Cf_Web.currenttime">
+            <summary>
+            返回一个毫秒的数字
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.Cf_PassWordEncrypt">
+            <summary>
+            Chengf类下des加密算法
+            </summary>
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.Encrypt(System.String)">
+              <summary>   
+              加密字符串   
+              </summary>   
+              <param   name="pToEncrypt">待加密字符串</param>   
+              <returns></returns>   
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.Decrypt(System.String)">
+              <summary>   
+              解密字符串   
+              </summary>   
+              <param   name="pToDecrypt">待解密字符串</param>   
+              <returns></returns>   
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.MD5Encrypt(System.String)">
+              <summary>
+              给一个字符串进行MD5加密
+              </summary>
+              <param   name="strText">待加密字符串</param>
+              <returns>加密后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.UrlEncode(System.String)">
+            <summary>
+            用于对字符串进行URLEncoed加密
+            </summary>
+            <param name="str">要加密的字符串</param>
+            <returns>加密后的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.UTF8ToString(System.String)">
+            <summary>
+            UTF-8转汉字函数
+            </summary>
+            <param name="m_strContent">要转换的字符串</param>
+            <returns>返回转换好的字符串</returns>
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.HexArrayToChar(System.Char[],System.Int32)">
+            <summary>
+            字符数组转对应汉字字符
+            </summary>
+            <param name="content">要转换的数字</param>
+            <param name="startIndex">起始位置</param>
+            <returns>对应的汉字</returns>
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.HexStringToChar(System.String)">
+            <summary>
+            字符串转对应汉字字符
+            只能处理如"8d34"之类的数字字符为对应的汉字
+            例子："9648" 转为 '陈'
+            </summary>
+            <param name="content">转换的字符串</param>
+            <returns>对应的汉字</returns>
+        </member>
+        <member name="M:Chengf.Cf_PassWordEncrypt.EscapeCharacter(System.Char)">
+            <summary>
+            转义字符转换函数
+            转换字符为对应的转义字符
+            </summary>
+            <param name="c">要转的字符</param>
+            <returns>对应的转义字符</returns>
+        </member>
+        <member name="T:Chengf.HelpMethod">
+            <summary>
+            内部帮助类
+            </summary>
+        </member>
+        <member name="M:Chengf.HelpMethod.StreamToBytes(System.IO.Stream)">
+            <summary>
+            将stream转换为byte[]
+            </summary>
+            <param name="stream"></param>
+            <returns></returns>
+        </member>
+        <member name="M:Chengf.HelpMethod.StringToCookieCollection(System.String,System.Uri)">
+            <summary>
+            将string类型的cookie转换为cookicollection类型的
+            </summary>
+            <param name="cookie">包含cookie的string[]集合</param>
+            <param name="url">关联的uri</param>
+            <returns></returns>
+        </member>
+        <member name="T:Chengf.ISendMessage">
+            <summary>
+            发送信息
+            </summary>
+        </member>
+        <member name="M:Chengf.ISendMessage.Send">
+            <summary>
+            发送
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:System.IO.Cf_DirectoryExtention">
+            <summary>
+            Directory的扩展类
+            </summary>
+        </member>
+        <member name="M:System.IO.Cf_DirectoryExtention.GetCurrectDirectorySize(System.IO.DirectoryInfo,System.String)">
+            <summary>
+            获取当前目录的大小
+            </summary>
+            <param name="di"></param>
+            <param name="path"></param>
+            <returns></returns>
+        </member>
+        <member name="T:System.IO.Cf_FileExtention">
+            <summary>
+            File文件的扩展类包括FileInfo
+            </summary>
+        </member>
+        <member name="M:System.IO.Cf_FileExtention.LengthByName(System.IO.FileInfo)">
+            <summary>
+            获取长度的具体单位表示
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="T:System.Collections.Generic.Cf_ListExtention">
+            <summary>
+            List的扩展类
+            </summary>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.FastInForEach``1(System.Collections.Generic.IEnumerable{``0},System.Int32,Chengf.DataManage{``0})">
+            <summary>
+            使用多线程加速ForEach的运行
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="data"></param>
+            <param name="threadnum">线程数目</param>
+            <param name="dataManage">要执行的方法</param>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.AccelerateForEach``1(System.Collections.Generic.List{``0},System.Int32,Chengf.DataManage{``0})">
+            <summary>
+            使用多线程加速ForEach的运行
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="data"></param>
+            <param name="threadnum">线程数目</param>
+            <param name="dataManage">要执行的方法</param>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.ListRemove(System.Collections.Generic.List{System.String},System.Int32,System.Int32)">
+            <summary>
+            Remove方法用于List,从指定位置删除指定的字符
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <param name="count">移除的指定字符数</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.ListRemove(System.Collections.Generic.List{System.String},System.Int32)">
+            <summary>
+            Remove方法用于List，删除从指定位置到最后位置的所以字符
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.ListExtractString(System.Collections.Generic.List{System.String},System.String,System.String)">
+            <summary>
+            Remove方法配合字符串检索用于List,从指定位置提取指定的前后字符相匹配的字符串
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="start">开始相匹配的字符串</param>
+            <param name="end">结束相匹配的字符串</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.LastListRemove(System.Collections.Generic.List{System.String},System.Int32,System.Int32)">
+            <summary>
+            Remove方法用于List,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <param name="count">移除的指定字符数</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:System.Collections.Generic.Cf_ListExtention.LastListRemove(System.Collections.Generic.List{System.String},System.Int32)">
+            <summary>
+            Remove方法用于List,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String List集合</param>
+            <param name="index">开始的位置</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="T:System.Cf_StringFormat">
+            <summary>
+            对string格式的判断类
+            </summary>
+        </member>
+        <member name="M:System.Cf_StringFormat.IsMailFormat(System.String)">
+            <summary>
+            电子邮箱检验
+            </summary>
+            <param name="stringname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringFormat.IsUrlFormat(System.String)">
+            <summary>
+            Url地址检验
+            </summary>
+            <param name="stringname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringFormat.IsPhoneFormat(System.String)">
+            <summary>
+            电话检验
+            </summary>
+            <param name="stringname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringFormat.IsIpFormat(System.String)">
+            <summary>
+            Ip检验
+            </summary>
+            <param name="stringname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringFormat.IsPostcodeFormat(System.String)">
+            <summary>
+            邮编检验
+            </summary>
+            <param name="stringname"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringFormat.IsIdCardFormat(System.String)">
+            <summary>
+            身份证检验
+            </summary>
+            <param name="stringname"></param>
+            <returns></returns>
+        </member>
+        <member name="T:System.Cf_StringHandle">
+            <summary>
+            增强string的操作
+            </summary>
+        </member>
+        <member name="M:System.Cf_StringHandle.ContainsIgnoreCase(System.String,System.String)">
+            <summary>
+            忽略大小进行比较
+            </summary>
+            <param name="str"></param>
+            <param name="value"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.FormatTime(System.Int32)">
+            <summary>
+            针对时间进行格式化
+            </summary>
+            <param name="num"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.SubMatchString(System.String,System.String,System.String)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的第一个匹配项提取出来，
+            stringname为空或者未找到匹配的则返回null（提取的包括开头和结尾）
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <returns>获取到的第一个匹配项</returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.SubMatchStringNoQH(System.String,System.String,System.String)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的第一个匹配项提取出来，
+            stringname为空或者未找到匹配的则返回null，（提取的不包括开头和结尾）
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <returns>获取到的第一个匹配项</returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.ExtractString(System.String,System.String,System.String,Chengf.Enum.StringMatchModel)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，匹配模式默认为Common
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <param name="matchModel">获取的匹配模式</param>
+            <returns>以字符串数组返回提取的所有符合要求的字符串</returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.ExtractString(System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，并通过确定bool值来决定是否将得到的字符串顺序反转
+            （提取的包括开头和结尾）
+            </summary>
+            <param name="stringname"></param>
+            <param name="startString"></param>
+            <param name="endString"></param>
+            <param name="ReverseBool"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.ExtractStringNoQH(System.String,System.String,System.String,Chengf.Enum.StringMatchModel)">
+            <summary>
+            将stringname中符合开头为startString结尾为endString的都提取出来，匹配模式默认为Common（提取出来的字符串中不包括开头和结尾）
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <param name="matchModel">获取的匹配模式</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.DeleteSpecificString(System.String,System.String,System.String)">
+            <summary>
+            删除指定字符串里面所有开头和结尾匹配的字符串（删除包括开头和结尾）
+            </summary>
+            <param name="stringname"></param>
+            <param name="startString"></param>
+            <param name="endString"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.DeleteSpecificStringNoQH(System.String,System.String,System.String)">
+            <summary>
+            删除指定字符串里面所有开头和结尾匹配的字符串（删除不会包括开头和结尾）
+            </summary>
+            <param name="stringname"></param>
+            <param name="startString"></param>
+            <param name="endString"></param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.Reverse(System.String)">
+            <summary>
+            将字符串反转
+            </summary>
+            <param name="stringname">要反转的字符串</param>
+            <returns></returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.LastExtractString(System.String,System.String,System.String)">
+            <summary>
+            从末尾将stringname中符合开头为startString结尾为endString的都提取出来
+            </summary>
+            <param name="stringname">要被提取的的字符串</param>
+            <param name="startString">开头匹配的字符串</param>
+            <param name="endString">结尾匹配的的字符串</param>
+            <returns>以字符串数组返回提取的所有符合要求的字符串</returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.LastStringRemove(System.String,System.Int32,System.Int32)">
+            <summary>
+            Remove方法用于string,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String</param>
+            <param name="index">开始的位置</param>
+            <param name="count">移除的指定字符数</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+        <member name="M:System.Cf_StringHandle.LastStringRemove(System.String,System.Int32)">
+            <summary>
+            Remove方法用于string,从指定位置删除指定的字符，从后面开始检索
+            </summary>
+            <param name="stringlist">传入的String</param>
+            <param name="index">开始的位置</param>
+            <returns>返回删除后的字符串</returns>
+        </member>
+    </members>
+</doc>
