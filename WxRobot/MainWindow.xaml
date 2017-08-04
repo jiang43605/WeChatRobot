@@ -7,6 +7,8 @@
         mc:Ignorable="d"
         Title="wechatRobot" WindowStartupLocation="CenterScreen" Height="600" Width="800"   Loaded="Window_Loaded" Closed="Window_Closed">
     <Window.Resources>
+        <local:VisiableConvert x:Key="visiableConvert"></local:VisiableConvert>
+        <!--<local:ImageConvert x:Key="imageConvert"></local:ImageConvert>-->
         <Style x:Key="linkLable" TargetType="Label">
             <Setter Property="Foreground" Value="Gray"></Setter>
             <Style.Triggers>
@@ -19,7 +21,12 @@
             <Setter Property="Margin" Value="0 3"></Setter>
         </Style>
         <DataTemplate x:Key="listboxitem">
-            
+            <CheckBox MaxHeight="20" IsChecked="{Binding Path=IsCheck, Mode=TwoWay}" Visibility="{Binding Path=Visiable, Mode=TwoWay, Converter={StaticResource visiableConvert}}">
+                <DockPanel>
+                    <Image Margin="0 1 0 3" Source="{Binding Path=BitMapImage, IsAsync=True}"></Image>
+                    <Label Padding="0" Content="{Binding Path=DisplayName}" Foreground="{Binding Path=FontColor}"></Label>
+                </DockPanel>
+            </CheckBox>
         </DataTemplate>
     </Window.Resources>
     <Grid>
@@ -47,12 +54,12 @@
                 <RowDefinition Height="310"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <ListBox x:Name="recentList" Grid.Row="1" Margin="20" ScrollViewer.CanContentScroll="True">
+            <ListBox x:Name="recentList" Grid.Row="1" Margin="20" ScrollViewer.CanContentScroll="True" ItemTemplate="{StaticResource listboxitem}">
             </ListBox>
             <TextBox x:Name="searchTb" Grid.Row="2" Height="20" Margin="20,0,171.2,0" VerticalAlignment="Top" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" TextWrapping="NoWrap" BorderBrush="Gray" KeyUp="searchTb_KeyUp"></TextBox>
             <CheckBox x:Name="allSelect" Grid.Row="2" Height="20" Margin="305,0,20.2,0" VerticalAlignment="Top" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" BorderBrush="Gray" Checked="allSelect_Checked" Unchecked="allSelect_Unchecked">全部选中</CheckBox>
             <Button x:Name="selectOther" Grid.Row="2" Height="20" Margin="233,0,97.2,0" VerticalAlignment="Top" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" Click="selectOther_Click">反选</Button>
-            <ListBox x:Name="allList" Grid.Row="2" Margin="20 30 20 20" ScrollViewer.CanContentScroll="True">
+            <ListBox x:Name="allList" Grid.Row="2" Margin="20 30 20 20" ScrollViewer.CanContentScroll="True" ItemTemplate="{StaticResource listboxitem}">
 
             </ListBox>
             <Rectangle Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" Fill="Gray" Margin="0 0 0 20" ></Rectangle>
@@ -66,7 +73,7 @@
             <TextBox x:Name="print" IsReadOnly="True" TextWrapping="WrapWithOverflow" Foreground="Gray" Grid.Column="2" Grid.Row="2" Margin="20" Padding="10"></TextBox>
             <Button x:Name="startBtn" Grid.Row="3" Grid.ColumnSpan="3" Content="start" HorizontalAlignment="Center"  VerticalAlignment="Top" Width="175" Click="startBtn_Click"/>
             <Label Content="Rule List" Grid.Column="2" HorizontalAlignment="Left" Margin="20,0,0,0" VerticalAlignment="Center"/>
-            <Label Content="Friend List" Grid.Column="0" HorizontalAlignment="Left" Margin="20,0,0,0" VerticalAlignment="Center" MouseLeftButtonUp="Label_MouseLeftButtonUp"/>
+            <Label Content="Friend List" Grid.Column="0" HorizontalAlignment="Left" Margin="20,0,0,0" VerticalAlignment="Center"/>
         </Grid>
     </Grid>
 </Window>

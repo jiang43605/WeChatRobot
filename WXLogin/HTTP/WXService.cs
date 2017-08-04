@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
@@ -9,6 +10,7 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace WXLogin
 {
@@ -21,9 +23,8 @@ namespace WXLogin
         private static Dictionary<string, string> _syncKey = new Dictionary<string, string>();
         private JObject _initResult;
         private WXUser _me;
-        private List<WXUser> _latestContactCache;
-
-        public event Action<IEnumerable<WXUser>> LastestContanctCacheUpdate;
+        public static readonly ObservableCollection<WXUserViewModel> RecentContactList = new ObservableCollection<WXUserViewModel>();
+        public static readonly ObservableCollection<WXUserViewModel> AllContactList = new ObservableCollection<WXUserViewModel>();
 
         //微信初始化url
         private static string _init_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxinit?r=" + BaseService.GetTime(10);
@@ -39,10 +40,13 @@ namespace WXLogin
         private static string _sync_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsync?sid=";
         //发送消息url
         private static string _sendmsg_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxsendmsg?sid=";
-
+        //获取其它用户信息
         private const string _batch_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxbatchgetcontact?type=ex&r={0}&pass_ticket={1}";
+        //初始化状态通知
+        private const string _webwxstatusnotify = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxstatusnotify?pass_ticket=";
         // login out
         public const string _loginOut_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey=";
+
 
         public static WXService Instance
         {
@@ -53,6 +57,7 @@ namespace WXLogin
                     try
                     {
                         _wxService = new WXService();
+                        _wxService.SynchronizationContext = SynchronizationContext.Current;
                     }
                     catch (Exception e)
                     {
@@ -72,6 +77,8 @@ namespace WXLogin
             get { return this._me; }
         }
 
+        public SynchronizationContext SynchronizationContext { set; get; }
+
         public string GetDeviceid
         {
             get
@@ -89,38 +96,9 @@ namespace WXLogin
         }
 
         /// <summary>
-        /// 添加元素到最近联系人
-        /// </summary>
-        /// <param name="users"></param>
-        public async void AddItemToLatestContactCacheAsync(IEnumerable<WXUser> users)
-        {
-            await Task.Run(() =>
-            {
-                if (this._latestContactCache == null)
-                    this._latestContactCache = new List<WXUser>();
-
-                lock (_latestContactCache) { this._latestContactCache.AddRange(users); }
-                OnLastestContanctCacheUpdate(users);
-            });
-        }
-        /// <summary>
         /// 获取好友完整列表
         /// </summary>
         public List<WXUser> AllContactCache { get; private set; }
-        /// <summary>
-        /// 获取最近好友列表,这是一个copy对象
-        /// </summary>
-        public List<WXUser> LatestContactCache
-        {
-            get
-            {
-                if (this._latestContactCache == null)
-                    this._latestContactCache = new List<WXUser>();
-                var list = new WXUser[_latestContactCache.Count];
-                _latestContactCache.CopyTo(list);
-                return list.ToList();
-            }
-        }
 
         public WXService()
         {
@@ -138,6 +116,8 @@ namespace WXLogin
                 _me.RemarkPYQuanPin = _initResult["User"]["RemarkPYQuanPin"].ToString();
                 _me.Sex = _initResult["User"]["Sex"].ToString();
                 _me.Signature = _initResult["User"]["Signature"].ToString();
+
+                Initstatusnotify();
             }
         }
         /// <summary>
@@ -181,14 +161,39 @@ namespace WXLogin
                 return false;
             }
         }
+        /// <summary>
+        /// 初始化和mobile的消息通信
+        /// </summary>
+        public void Initstatusnotify()
+        {
+            Console.WriteLine("begin init Initstatusnotify()");
+            var sid = BaseService.GetCookie("wxsid");
+            var uin = BaseService.GetCookie("wxuin");
+            if (sid == null || uin == null) return;
 
+            var url = _webwxstatusnotify + LoginService.Pass_Ticket;
+            var jsonObject = new
+            {
+                BaseRequest = new
+                {
+                    DeviceID = GetDeviceid,
+                    Sid = sid.Value,
+                    Skey = LoginService.SKey,
+                    Uin = uin.Value
+                },
+                ClientMsgId = BaseService.GetTime(),
+                Code = 3,
+                FromUserName = Me.UserName,
+                ToUserName = Me.UserName
+            };
+
+            BaseService.SendPostRequest(url, JsonConvert.SerializeObject(jsonObject));
+        }
         /// <summary>
         /// 初始化联系人数据
         /// </summary>
-        public void InitData(Action<IEnumerable<WXUser>> action = null)
+        public void InitData()
         {
-            if (action != null) this.LastestContanctCacheUpdate += action;
-
             Console.WriteLine("begin init InitLatestContact()");
             InitLatestContact();
 
@@ -213,13 +218,65 @@ namespace WXLogin
         {
             return BaseService.SendGetRequest(_getheadimg_url + usename);
         }
+
+        /// <summary>
+        /// 无重复添加元素到集合，T只支持List和ObservableCollection类型
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="source"></param>
+        /// <param name="items"></param>
+        private void UpdateItemsToListWithoutRepeat<T>(T source, IEnumerable<WXUser> items) where T : class
+        {
+            if (source is List<WXUser>)
+            {
+                var temp = source as List<WXUser>;
+                foreach (var item in items)
+                {
+                    var exsitItem = temp.SingleOrDefault(o => o.UserName == item.UserName);
+                    if (exsitItem != null)
+                    {
+                        exsitItem.NickName = item.NickName;
+                        exsitItem.MemberList = item.MemberList;
+                        exsitItem.RemarkName = item.RemarkName;
+                        exsitItem.UserType = item.UserType;
+                        continue;
+                    }
+
+                    temp.Add(item);
+                }
+            }
+            else if (source is ObservableCollection<WXUserViewModel>)
+            {
+                var temp = source as ObservableCollection<WXUserViewModel>;
+                foreach (var item in items)
+                {
+                    SynchronizationContext.Post(_ =>
+                    {
+                        var exsitItem = temp.SingleOrDefault(o => o.UserName == item.UserName);
+                        if (exsitItem != null)
+                        {
+                            exsitItem.DisplayName = item.ShowName;
+                            exsitItem.UserType = item.UserType;
+                            exsitItem.HeadImgUrl = item.HeadImgUrl;
+                            return;
+                        }
+                        temp.Add(new WXUserViewModel
+                        {
+                            DisplayName = item.ShowName,
+                            UserType = item.UserType,
+                            HeadImgUrl = item.HeadImgUrl,
+                            UserName = item.UserName
+                        });
+                    }, null);
+                }
+            }
+        }
         /// <summary>
         /// 获取好友列表
         /// </summary>
         /// <returns></returns>
         public void InitContact()
         {
-
             var bytes = BaseService.SendGetRequest(_getcontact_url);
             var contact_str = Encoding.UTF8.GetString(bytes);
 
@@ -250,6 +307,7 @@ namespace WXLogin
                                  });
 
             AllContactCache = contact_all;
+            UpdateItemsToListWithoutRepeat(AllContactList, contact_all);
         }
         /// <summary>
         /// 获取所有好友列表,在初次初始化时候被调用
@@ -263,8 +321,11 @@ namespace WXLogin
                      .Where(o => o.StartsWith("@"))
                      .Where(o => AllContactCache.All(k => k.UserName != o));
 
-                 if (allList.Count() == 0) return;
-                 lock (AllContactCache) { AllContactCache.AddRange(GetBatchContact(allList)); }
+                 if (!allList.Any()) return;
+                 lock (AllContactCache)
+                 {
+                     UpdateItemsToListWithoutRepeat(AllContactCache, GetBatchContact(allList));
+                 }
              });
         }
         /// <summary>
@@ -273,37 +334,46 @@ namespace WXLogin
         public void InitLatestContact()
         {
             if (this._initResult == null) return;
-            var list = (from JObject contact in _initResult["ContactList"]
-                        select new WXUser
-                        {
-                            UserType = UserType.Unkown,
-                            UserName = contact["UserName"].ToString(),
-                            City = contact["City"].ToString(),
-                            HeadImgUrl = contact["HeadImgUrl"].ToString(),
-                            NickName = contact["NickName"].ToString(),
-                            Province = contact["Province"].ToString(),
-                            PYQuanPin = contact["PYQuanPin"].ToString(),
-                            RemarkName = contact["RemarkName"].ToString(),
-                            DisplayName = contact["DisplayName"].ToString(),
-                            RemarkPYQuanPin = contact["RemarkPYQuanPin"].ToString(),
-                            Sex = contact["Sex"].ToString(),
-                            Signature = contact["Signature"].ToString()
-                        }).ToList();
+            var list = _initResult["ContactList"].Select(contact =>
+            {
+                var newUser = new WXUser
+                {
+                    UserType = UserType.Unkown,
+                    UserName = contact["UserName"].ToString(),
+                    City = contact["City"].ToString(),
+                    HeadImgUrl = contact["HeadImgUrl"].ToString(),
+                    NickName = contact["NickName"].ToString(),
+                    Province = contact["Province"].ToString(),
+                    PYQuanPin = contact["PYQuanPin"].ToString(),
+                    RemarkName = contact["RemarkName"].ToString(),
+                    DisplayName = contact["DisplayName"].ToString(),
+                    RemarkPYQuanPin = contact["RemarkPYQuanPin"].ToString(),
+                    Sex = contact["Sex"].ToString(),
+                    Signature = contact["Signature"].ToString()
+                };
+
+                if (newUser.UserName.StartsWith("@@")) newUser.UserType = UserType.ChatRoom;
+                return newUser;
+            }).ToList();
 
             Console.WriteLine("InitLatestContact");
             Console.WriteLine("get first laster friends");
-            AddItemToLatestContactCacheAsync(list);
+            UpdateItemsToListWithoutRepeat(RecentContactList, list);
 
             Task.Run(() =>
             {
                 // check other in ChatSet
                 var chatset = _initResult["ChatSet"].Value<string>();
                 var otherItems = chatset.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Where(o => o.StartsWith("@"))
-                    .Where(o => _latestContactCache.All(k => k.UserName != o));
+                    .Where(o => o.StartsWith("@@"));
 
                 Console.WriteLine("get other in chatset");
-                AddItemToLatestContactCacheAsync(GetBatchContact(otherItems));
+                var newItems = GetBatchContact(otherItems);
+                UpdateItemsToListWithoutRepeat(RecentContactList, newItems);
+
+                // update all
+                list.AddRange(newItems);
+                UpdateItemsToListWithoutRepeat(AllContactCache, list);
             });
         }
         /// <summary>
@@ -548,16 +618,25 @@ namespace WXLogin
         /// </summary>
         /// <param name="userName"></param>
         /// <returns></returns>
-        public object GetNickName(WXMsg userName)
+        public string GetNickName(string userName, string msg)
         {
-            var un = this._latestContactCache.SingleOrDefault(o => o.UserName == userName.From)
-                ?? this.AllContactCache.SingleOrDefault(o => o.UserName == userName.From);
+            var un = RecentContactList.SingleOrDefault(o => o.UserName == userName);
 
-            if (un == null) return "null";
-            if (un.UserType != UserType.ChatRoom) return un.NickName;
-            var splitString = userName.Msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries);
-            return new Tuple<string, string, string>(un.NickName,
-                    un.MemberList.Single(o => o.UserName == splitString[0]).NickName, splitString[1]);
+            if (un != null)
+            {
+                if (un.UserType != UserType.ChatRoom) return un.DisplayName;
+
+                var unFromAll = AllContactCache.SingleOrDefault(o => o.UserName == userName);
+                if (unFromAll == null) return $"[{un.DisplayName}][unkown]";
+                var splitString = msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+                return $"[{un.DisplayName}]{unFromAll.MemberList.SingleOrDefault(o => o.UserName == splitString)?.NickName}";
+            }
+
+            var unFromAll1 = AllContactCache.SingleOrDefault(o => o.UserName == userName);
+            if (unFromAll1 == null) return "[unkown]";
+            if (unFromAll1.UserType != UserType.ChatRoom) return unFromAll1.ShowName;
+            var splitString1 = msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
+            return $"[{unFromAll1.ShowName}]{unFromAll1.MemberList?.Single(o => o.UserName == splitString1).NickName}";
         }
 
         /// <summary>
@@ -568,7 +647,6 @@ namespace WXLogin
         {
             while (true)
             {
-                var numFlag = default(int);
                 var sync_flag = WxSyncCheck();
                 var selector = Regex.Match(sync_flag ?? string.Empty, "selector:\"\\s*?(\\d+)\\s*?\"").Groups[1].Value;
                 var retcode = Regex.Match(sync_flag ?? string.Empty, "retcode:\"\\s*?(\\d+)\\s*?\"").Groups[1].Value;
@@ -598,35 +676,35 @@ namespace WXLogin
                 if (sync_result == null) continue;
                 if (sync_result["AddMsgCount"] == null || sync_result["AddMsgCount"].ToString() == "0") continue;
 
-                var msgs = sync_result["AddMsgList"].Select(m => new WXMsg
+                Task.Run(() =>
                 {
-                    From = m["FromUserName"].ToString(),
-                    Msg = m["Content"].ToString(),
-                    Readed = false,
-                    Time = DateTime.Now,
-                    To = m["ToUserName"].ToString(),
-                    Type = int.Parse(m["MsgType"].ToString())
+                    var numFlag = default(int);
+                    var msgs = sync_result["AddMsgList"].Select(m => new WXMsg
+                    {
+                        From = m["FromUserName"].ToString(),
+                        FromNickName = GetNickName(m["FromUserName"].ToString(), m["Content"].ToString()),
+                        Msg = m["Content"].ToString(),
+                        Readed = false,
+                        Time = DateTime.Now,
+                        To = m["ToUserName"].ToString(),
+                        ToNickName = GetNickName(m["ToUserName"].ToString(), m["Content"].ToString()),
+                        Type = int.Parse(m["MsgType"].ToString())
+                    });
+
+                    numFlag = msgs.Count();
+                    foreach (var msg in sync_result["AddMsgList"])
+                    {
+                        if (msg["MsgType"].Value<int>() != 51) continue;
+
+                        Console.WriteLine("get a msg which the type=51");
+                        InitAllContactAsync(msg["StatusNotifyUserName"].Value<string>());
+                        numFlag--;
+                    }
+
+                    if (numFlag == 0) return;
+                    msgAction?.Invoke(msgs.Where(o => o.Type != 51));
                 });
-
-                numFlag = msgs.Count();
-                foreach (var msg in sync_result["AddMsgList"])
-                {
-                    if (msg["MsgType"].Value<int>() != 51) continue;
-
-                    Console.WriteLine("get a msg which the type=51");
-                    InitAllContactAsync(msg["StatusNotifyUserName"].Value<string>());
-                    numFlag--;
-                }
-
-                if (numFlag == 0) continue;
-                Task.Run(() => { msgAction?.Invoke(msgs); });
             }
-        }
-
-        protected virtual void OnLastestContanctCacheUpdate(IEnumerable<WXUser> users)
-        {
-            Console.WriteLine("update recentListBox");
-            LastestContanctCacheUpdate?.Invoke(users);
         }
     }
 

@@ -18,6 +18,10 @@ namespace WXLogin
             set;
         }
         /// <summary>
+        /// 消息发送方昵称
+        /// </summary>
+        public string FromNickName { set; get; }
+        /// <summary>
         /// 消息接收方
         /// </summary>
         public string To
@@ -25,6 +29,10 @@ namespace WXLogin
             set;
             get;
         }
+        /// <summary>
+        /// 消息接收方昵称
+        /// </summary>
+        public string ToNickName { set; get; }
         /// <summary>
         /// 消息发送时间
         /// </summary>

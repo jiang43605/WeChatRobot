@@ -53,11 +53,5 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\WXLogin\WXLogin.csproj">
-      <Project>{ac60a8fe-268e-4d9d-8c02-15540eec9b71}</Project>
-      <Name>WXLogin</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

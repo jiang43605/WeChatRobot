@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,6 +13,7 @@ using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Windows.Data;
 
 namespace WxRobot
 {
@@ -83,7 +85,7 @@ namespace WxRobot
                  {
                      this.Dispatcher.BeginInvoke(new Action(() =>
                      {
-                         this.codeImage.Source = ConvertByteToBitmapImage(ls.GetQRCode());
+                         this.codeImage.Source = InternalHelp.ConvertByteToBitmapImage(ls.GetQRCode());
                          this.loginLable.Content = "please scan the code";
                      }));
                  }
@@ -97,7 +99,7 @@ namespace WxRobot
                      {
                          this.Dispatcher.BeginInvoke(new Action(() =>
                          {
-                             this.codeImage.Source = ConvertByteToBitmapImage(loginResult as byte[]);
+                             this.codeImage.Source = InternalHelp.ConvertByteToBitmapImage(loginResult as byte[]);
                              this.loginLable.Content = "please click login button in you phone!";
                          }));
                      }
@@ -137,23 +139,28 @@ namespace WxRobot
         {
             this.loginInfo.Visibility = Visibility.Hidden;
             this.setPanel.Visibility = Visibility.Visible;
+            this.recentList.ItemsSource = WXService.RecentContactList;
+            this.allList.ItemsSource = WXService.AllContactList;
 
-            _wxSerivice.InitData(LastestCotactCacheUpdate);
+            WXService.RecentContactList.CollectionChanged += UpdateImage;
+            WXService.AllContactList.CollectionChanged += UpdateImage;
 
-            Dispatcher.InvokeAsync(() =>
-            {
-                this._allFriend = SetListBox(this.allList, _wxSerivice.AllContactCache);
-            });
+            _wxSerivice.InitData();
         }
 
-        private void LastestCotactCacheUpdate(IEnumerable<WXUser> obj)
+        private void UpdateImage(object sender, NotifyCollectionChangedEventArgs e)
         {
-            Dispatcher.InvokeAsync(() =>
+            foreach (WXUserViewModel item in e.NewItems)
             {
-                SetListBox(this.recentList, obj);
-            });
+                Task.Run(() =>
+                {
+                    var iconBytes = item.UserName.Contains("@@")
+                        ? WXLogin.WXService.Instance.GetHeadImg(item.UserName)
+                        : WXLogin.WXService.Instance.GetIcon(item.UserName);
+                    item.BitMapImage = InternalHelp.ConvertByteToBitmapImage(iconBytes);
+                });
+            }
         }
-
         private async void InitPulginAsync()
         {
             await Task.Run(() =>
@@ -194,42 +201,45 @@ namespace WxRobot
             foreach (var item in msgs)
             {
                 var reMsg = default(string);
-                var fromNickName = default(string);
                 var msg = item.Msg;
                 // update LatestContact
                 // and will cache the user
                 UpdateLatestContact(item);
-                var nickNameInfo = _wxSerivice.GetNickName(item);
-                if (nickNameInfo is string) fromNickName = (string)nickNameInfo;
-                else
-                {
-                    var tp = nickNameInfo as Tuple<string, string, string>;
-                    fromNickName = $"[{tp?.Item1}]{tp?.Item2}";
-                    msg = tp?.Item3;
-                }
 
-                PrintLin($"[{fromNickName}] - [{_wxSerivice.Me.NickName}] - {DateTime.Now}");
+                PrintLin($"[{item.FromNickName}] - [{item.ToNickName}] - {DateTime.Now}");
                 PrintLin($"Msg: {msg}");
 
                 if (item.From.Equals(_wxSerivice.Me.UserName))
                 {
                     // from me to other people
                     var toUser = Rule.Rules.Keys.FirstOrDefault(o => o.UserName == item.To);
-                    if (toUser == null) return;
+                    if (toUser == null)
+                    {
+                        PrintLin(); continue;
+                    }
 
                     var toRule = Rule.Rules[toUser];
-                    if (toRule.Name == "Default") continue;
+                    if (toRule.Name == "Default")
+                    {
+                        PrintLin(); continue;
+                    }
                     reMsg = toRule.FromMeInvoke(toUser.UserName, msg, item.Type);
                 }
                 else
                 {
                     // find the specify user rule, if aleady store in Rule.Rules
                     var user = Rule.Rules.Keys.FirstOrDefault(o => o.UserName == item.From);
-                    if (user == null) continue;
+                    if (user == null)
+                    {
+                        PrintLin(); continue;
+                    };
                     var rule = Rule.Rules[user];
 
                     // if rule equals "Default", just ignore it
-                    if (rule.Name == "Default") continue;
+                    if (rule.Name == "Default")
+                    {
+                        PrintLin(); continue;
+                    };
                     reMsg = rule.Invoke(user.UserName, msg, item.Type);
                 }
 
@@ -246,66 +256,23 @@ namespace WxRobot
 
         private void UpdateLatestContact(WXMsg item)
         {
-            if (_wxSerivice.LatestContactCache.Exists(o => o.UserName == item.From)) return;
-            var newUser = _wxSerivice.AllContactCache.SingleOrDefault(o => o.UserName == item.From);
-            if (newUser == null) return;
-
-            _wxSerivice.AddItemToLatestContactCacheAsync(new[] { newUser });
-        }
-
-        /// <summary>
-        /// set items to listBox, must work in UI thread
-        /// </summary>
-        /// <param name="listBox"></param>
-        /// <param name="users"></param>
-        private IEnumerable<CheckBox> SetListBox(ItemsControl listBox, IEnumerable<WXUser> users)
-        {
-
-            var listCheckBox = (listBox.ItemsSource as IEnumerable<CheckBox>)?.ToList() ?? new List<CheckBox>();
-
-            foreach (var user in users)
+            foreach (var user in new[] { item.From, item.To }
+            .Where(o => !WXService.RecentContactList.Any(k => k.UserName == o)))
             {
-                var checkbox = new CheckBox
-                {
-                    MaxHeight = 20
-                };
+                var newUser = _wxSerivice.AllContactCache.SingleOrDefault(o => o.UserName == user);
+                if (newUser == null) return;
 
-                var im = new Image
+                Dispatcher.InvokeAsync(() =>
                 {
-                    Margin = new Thickness(0, 1, 0, 3)
-                };
-
-                var panel = new DockPanel();
-                panel.Children.Add(im);
-                panel.Children.Add(new Label
-                {
-                    Padding = new Thickness(0),
-                    Content = user.NickName
+                    WXService.RecentContactList.Add(new WXUserViewModel
+                    {
+                        DisplayName = newUser.ShowName,
+                        HeadImgUrl = newUser.HeadImgUrl,
+                        UserName = newUser.UserName,
+                        UserType = newUser.UserType
+                    });
                 });
-
-                checkbox.Content = panel;
-                checkbox.DataContext = user;
-
-                UpdateImageAsync(user, im);
-                listCheckBox.Add(checkbox);
-
             }
-
-            listBox.ItemsSource = listCheckBox.AsEnumerable();
-            return listCheckBox;
-        }
-
-        private async void UpdateImageAsync(WXUser user, Image im)
-        {
-            await Task.Run(() =>
-            {
-                var icon = ConvertByteToBitmapImage(user.Icon);
-
-                this.Dispatcher.InvokeAsync(() =>
-                {
-                    im.Source = icon;
-                });
-            });
         }
 
         private void SetRuleListBox(object exObj)
@@ -355,50 +322,29 @@ namespace WxRobot
         {
             Print(msg + "\r\n");
         }
-        private BitmapImage ConvertByteToBitmapImage(byte[] bytes)
-        {
-            try
-            {
-                using (var m = new MemoryStream(bytes))
-                {
-                    using (var m1 = new MemoryStream())
-                    {
-                        System.Drawing.Image.FromStream(m).Save(m1, System.Drawing.Imaging.ImageFormat.Png);
-                        var bitImage = new BitmapImage();
-                        bitImage.BeginInit();
-                        bitImage.CacheOption = BitmapCacheOption.OnLoad;
-                        bitImage.StreamSource = m1;
-                        bitImage.EndInit();
-                        bitImage.Freeze();
-                        return bitImage;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("convert fail in bytes to BitmapImage: " + ex.Message);
-                return null;
-            }
-        }
+
 
         private void startBtn_Click(object sender, RoutedEventArgs e)
         {
-            var checkedList = new List<CheckBox>();
             var rule = (Rule)null;
             var log = string.Empty;
-            foreach (var item in this.recentList.Items)
-            {
-                var obj = item as CheckBox;
-                if (obj.IsChecked == true)
-                    checkedList.Add(obj);
-            }
 
-            foreach (var item in this.allList.Items)
+            var recentCheck = WXService.RecentContactList
+                  .Where(o => o.IsCheck == true);
+            var allCheck = WXService.AllContactList
+                .Where(o => o.IsCheck == true);
+
+            var finallyCheck = recentCheck.ToList();
+            foreach (var item in allCheck)
             {
-                var obj = item as CheckBox;
-                if (obj.IsChecked == true
-                    && checkedList.Count(o => (o.DataContext as WXUser).NickName == (obj.DataContext as WXUser).NickName) < 1)
-                    checkedList.Add(obj);
+                if (finallyCheck.Contains(item, new CheckComparer()))
+                {
+                    item.IsCheck = false;
+                    item.FontColor = "#FF000000";
+                    continue;
+                }
+
+                finallyCheck.Add(item);
             }
 
             foreach (var item in this.radios.Children)
@@ -412,64 +358,18 @@ namespace WxRobot
                 break;
             }
 
-            foreach (var item in checkedList)
+            foreach (var item in finallyCheck)
             {
-                var panel = item.Content as DockPanel;
-                var lb = panel.Children[1] as Label;
-                lb.Content = Regex.Replace((lb.Content as string), @"\[Rule: .+\]", string.Empty) + $"[Rule: {rule.Name}]";
-                lb.Foreground = Brushes.Red;
+                item.DisplayName = Regex.Replace(item.DisplayName, @"\[Rule: .+\]", string.Empty) + $"[Rule: {rule.Name}]";
+                item.FontColor = "#FFFF0000";
 
-                var wxUser = item.DataContext as WXUser;
+                var wxUser = _wxSerivice.AllContactCache.Single(o => o.UserName == item.UserName);
                 if (Rule.SetBingDing(wxUser, rule)) log += $"Bingding {rule.Name} rule into {wxUser.NickName}\r\n";
                 else log += $"Fail Bingding {rule.Name} rule into {wxUser.NickName}\r\n";
             }
 
             PrintLin(log);
         }
-
-        private void Label_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            //var el = sender as Label;
-            //var saveList = new List<string>();
-            //el.IsEnabled = false;
-
-            //foreach (var item in this.recentList.Items)
-            //{
-            //    var cb = item as CheckBox;
-            //    var dp = cb.Content as DockPanel;
-            //    var lb = dp.Children[1] as Label;
-            //    if (lb.Foreground == Brushes.Red) saveList.Add(lb.Content as string);
-            //}
-
-            //SetListBox(this.recentList, _wxSerivice.GetLatestContact());
-
-            //Task.Run(() =>
-            //{
-            //    var originList = saveList
-            //    .Select(o => Regex.Replace(o, @"\[Rule: .+\]", string.Empty))
-            //    .ToList();
-
-            //    this.recentList.Dispatcher.BeginInvoke(new Action(() =>
-            //    {
-            //        el.IsEnabled = true;
-
-            //        foreach (var item in this.recentList.Items)
-            //        {
-            //            var cb = item as CheckBox;
-            //            var dp = cb.Content as DockPanel;
-            //            var lb = dp.Children[1] as Label;
-
-            //            for (int i = 0; i < originList.Count; i++)
-            //            {
-            //                if (originList[i] != (lb.Content as string)) continue;
-            //                lb.Foreground = Brushes.Red;
-            //                lb.Content = saveList[i];
-            //            }
-            //        }
-            //    }));
-            //});
-        }
-
         private void Window_Closed(object sender, EventArgs e)
         {
             if (_arg != "plugin" && _wxSerivice != null)
@@ -482,39 +382,33 @@ namespace WxRobot
             var control = sender.Cast<TextBox>();
             if (control.Text == string.Empty)
             {
-                this.allList.ItemsSource = this._allFriend;
+                this.allList.ItemsSource = WXService.AllContactList;
             }
 
-            this.allList.ItemsSource = _allFriend.Where(o => o.Content
-            .Cast<DockPanel>().Children[1]
-            .Cast<Label>().Content
-            .Cast<string>().Contains(control.Text));
+            this.allList.ItemsSource = WXService.AllContactList.Where(o => o.DisplayName.Contains(control.Text));
         }
 
         private void allSelect_Checked(object sender, RoutedEventArgs e)
         {
-            foreach (var item in this.allList.ItemsSource)
+            foreach (var item in WXService.AllContactList)
             {
-                item.Cast<CheckBox>().IsChecked = true;
+                item.IsCheck = true;
             }
         }
 
         private void allSelect_Unchecked(object sender, RoutedEventArgs e)
         {
-            foreach (var item in this.allList.ItemsSource)
+            foreach (var item in WXService.AllContactList)
             {
-                item.Cast<CheckBox>().IsChecked = false;
+                item.IsCheck = false;
             }
         }
 
         private void selectOther_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var item in this.allList.ItemsSource)
+            foreach (var item in WXService.AllContactList)
             {
-                var status = item.Cast<CheckBox>().IsChecked;
-
-                if (status == null) status = false;
-                item.Cast<CheckBox>().IsChecked = !status;
+                item.IsCheck = !(item.IsCheck ?? false);
             }
         }
     }

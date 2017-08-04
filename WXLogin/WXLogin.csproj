@@ -48,6 +48,7 @@
     <Compile Include="HTTP\WXService.cs" />
     <Compile Include="Objects\WXMsg.cs" />
     <Compile Include="Objects\WXUser.cs" />
+    <Compile Include="Objects\WXUserViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
