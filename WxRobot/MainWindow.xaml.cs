@@ -37,17 +37,6 @@ namespace WxRobot
 
         private async void Init()
         {
-            //// to save cookie
-            //if (File.Exists(BaseService.Path))
-            //{
-            //    BaseService.GetSaveCookie();
-            //}
-            //else
-            //{
-            //    await InitLoginAsync();
-            //    BaseService.SaveCookie();
-            //}
-
             if (_arg == "plugin")
             {
                 this.loginInfo.Visibility = Visibility.Hidden;
@@ -58,8 +47,16 @@ namespace WxRobot
             else
             {
                 // wechat login
-                await InitLoginAsync();
-                _wxSerivice = new WXService();
+                var status = await InitLoginAsync();
+
+                if (!status)
+                {
+                    // login fail
+                    MessageBox.Show("登录失败,请稍等再试!");
+                    Console.WriteLine("login fail, try again in an hour!");
+                    Console.WriteLine("the more info: you may be banned by the WeChat, try again in an hour, maybe normal");
+                    return;
+                }
 
                 // add pulgin to control panel
                 InitPulginAsync();
@@ -73,7 +70,7 @@ namespace WxRobot
 
 
         }
-        private async Task InitLoginAsync()
+        private async Task<bool> InitLoginAsync()
         {
             this.loginLable.Content = "get the wechat code...";
 
@@ -82,11 +79,14 @@ namespace WxRobot
                  // start login
                  var ls = new LoginService();
 
-                 this.Dispatcher.BeginInvoke(new Action(() =>
+                 if (ls.LoginCheck() == null)
                  {
-                     this.codeImage.Source = ConvertByteToBitmapImage(ls.GetQRCode());
-                     this.loginLable.Content = "please scan the code";
-                 }));
+                     this.Dispatcher.BeginInvoke(new Action(() =>
+                     {
+                         this.codeImage.Source = ConvertByteToBitmapImage(ls.GetQRCode());
+                         this.loginLable.Content = "please scan the code";
+                     }));
+                 }
 
                  // if the user scan and click login button
                  while (true)
@@ -108,13 +108,28 @@ namespace WxRobot
                      }
                  }
              });
+
+            _wxSerivice = WXService.Instance;
+            return _wxSerivice != null;
         }
 
         private void OpenListening()
         {
             Task.Run(() =>
             {
-                _wxSerivice.Listening(ListeningHandle);
+                try
+                {
+                    _wxSerivice.Listening(ListeningHandle);
+                }
+                catch (LoginOutException)
+                {
+                    MessageBox.Show("在其它地方登录！程序将退出！");
+                    Environment.Exit(0);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("OpenListening: " + e.Message);
+                }
             });
         }
 
@@ -123,8 +138,20 @@ namespace WxRobot
             this.loginInfo.Visibility = Visibility.Hidden;
             this.setPanel.Visibility = Visibility.Visible;
 
-            SetListBox(this.recentList, _wxSerivice.GetLatestContact());
-            this._allFriend = SetListBox(this.allList, _wxSerivice.GetContact());
+            _wxSerivice.InitData(LastestCotactCacheUpdate);
+
+            Dispatcher.InvokeAsync(() =>
+            {
+                this._allFriend = SetListBox(this.allList, _wxSerivice.AllContactCache);
+            });
+        }
+
+        private void LastestCotactCacheUpdate(IEnumerable<WXUser> obj)
+        {
+            Dispatcher.InvokeAsync(() =>
+            {
+                SetListBox(this.recentList, obj);
+            });
         }
 
         private async void InitPulginAsync()
@@ -167,12 +194,22 @@ namespace WxRobot
             foreach (var item in msgs)
             {
                 var reMsg = default(string);
+                var fromNickName = default(string);
+                var msg = item.Msg;
                 // update LatestContact
                 // and will cache the user
                 UpdateLatestContact(item);
+                var nickNameInfo = _wxSerivice.GetNickName(item);
+                if (nickNameInfo is string) fromNickName = (string)nickNameInfo;
+                else
+                {
+                    var tp = nickNameInfo as Tuple<string, string, string>;
+                    fromNickName = $"[{tp?.Item1}]{tp?.Item2}";
+                    msg = tp?.Item3;
+                }
 
-                PrintLin(/*$"[{_wxSerivice.GetNickName(item.From)}] - [{_wxSerivice.GetNickName(item.To)}] - {*/DateTime.Now.ToString()/*}"*/);
-                PrintLin($"Msg: {item.Msg}");
+                PrintLin($"[{fromNickName}] - [{_wxSerivice.Me.NickName}] - {DateTime.Now}");
+                PrintLin($"Msg: {msg}");
 
                 if (item.From.Equals(_wxSerivice.Me.UserName))
                 {
@@ -181,7 +218,8 @@ namespace WxRobot
                     if (toUser == null) return;
 
                     var toRule = Rule.Rules[toUser];
-                    reMsg = toRule.FromMeInvoke(toUser.UserName, item.Msg, item.Type);
+                    if (toRule.Name == "Default") continue;
+                    reMsg = toRule.FromMeInvoke(toUser.UserName, msg, item.Type);
                 }
                 else
                 {
@@ -192,7 +230,7 @@ namespace WxRobot
 
                     // if rule equals "Default", just ignore it
                     if (rule.Name == "Default") continue;
-                    reMsg = rule.Invoke(user.UserName, item.Msg, item.Type);
+                    reMsg = rule.Invoke(user.UserName, msg, item.Type);
                 }
 
                 PrintLin($"ReMsg: {reMsg}");
@@ -208,56 +246,22 @@ namespace WxRobot
 
         private void UpdateLatestContact(WXMsg item)
         {
-            if (!_wxSerivice.LatestContactCache.Exists(o => o.UserName == item.From))
-            {
-                var newUser = new WXUser()
-                {
-                    UserName = item.From,
-                    NickName = _wxSerivice.GetNickName(item.From)
-                };
-                _wxSerivice.LatestContactCache.Add(newUser);
+            if (_wxSerivice.LatestContactCache.Exists(o => o.UserName == item.From)) return;
+            var newUser = _wxSerivice.AllContactCache.SingleOrDefault(o => o.UserName == item.From);
+            if (newUser == null) return;
 
-                Task.Run(() =>
-                {
-                    var icon = ConvertByteToBitmapImage(_wxSerivice.GetIcon(item.From));
-                    Dispatcher.InvokeAsync(() =>
-                    {
-                        var rl = (this.recentList.ItemsSource as IEnumerable<CheckBox>).ToList();
-
-                        var dp = new DockPanel();
-                        dp.Children.Add(new Image()
-                        {
-                            Margin = new Thickness(0, 1, 0, 3),
-                            Source = icon
-                        });
-
-                        dp.Children.Add(new Label
-                        {
-                            Padding = new Thickness(0),
-                            Content = newUser.NickName
-                        });
-                        rl.Add(new CheckBox
-                        {
-                            MaxHeight = 20,
-                            Content = dp
-                        });
-
-                        this.recentList.ItemsSource = rl.AsEnumerable();
-                    });
-                });
-            }
+            _wxSerivice.AddItemToLatestContactCacheAsync(new[] { newUser });
         }
 
         /// <summary>
-        /// set items to listBox
+        /// set items to listBox, must work in UI thread
         /// </summary>
         /// <param name="listBox"></param>
         /// <param name="users"></param>
-        private IEnumerable<CheckBox> SetListBox(ListBox listBox, IEnumerable<WXUser> users)
+        private IEnumerable<CheckBox> SetListBox(ItemsControl listBox, IEnumerable<WXUser> users)
         {
 
-            var listCheckBox = new List<CheckBox>();
-            listBox.Dispatcher.BeginInvoke(new Action(() => { listBox.Items.Clear(); }));
+            var listCheckBox = (listBox.ItemsSource as IEnumerable<CheckBox>)?.ToList() ?? new List<CheckBox>();
 
             foreach (var user in users)
             {
@@ -287,12 +291,8 @@ namespace WxRobot
 
             }
 
-            listBox.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                listBox.ItemsSource = listCheckBox.AsEnumerable();
-            }));
-
-            return listCheckBox.AsEnumerable();
+            listBox.ItemsSource = listCheckBox.AsEnumerable();
+            return listCheckBox;
         }
 
         private async void UpdateImageAsync(WXUser user, Image im)
@@ -303,11 +303,7 @@ namespace WxRobot
 
                 this.Dispatcher.InvokeAsync(() =>
                 {
-                    var sw = Stopwatch.StartNew();
                     im.Source = icon;
-                    sw.Stop();
-
-                    Debug.WriteLine($"[{user.Icon.Length}]{user.NickName}:\t[{sw.ElapsedMilliseconds}]");
                 });
             });
         }
@@ -363,20 +359,24 @@ namespace WxRobot
         {
             try
             {
-                using (var stream = new MemoryStream(bytes))
+                using (var m = new MemoryStream(bytes))
                 {
-                    var bitImage = new BitmapImage();
-                    bitImage.BeginInit();
-                    bitImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitImage.StreamSource = stream;
-                    bitImage.EndInit();
-                    bitImage.Freeze();
-                    return bitImage;
+                    using (var m1 = new MemoryStream())
+                    {
+                        System.Drawing.Image.FromStream(m).Save(m1, System.Drawing.Imaging.ImageFormat.Png);
+                        var bitImage = new BitmapImage();
+                        bitImage.BeginInit();
+                        bitImage.CacheOption = BitmapCacheOption.OnLoad;
+                        bitImage.StreamSource = m1;
+                        bitImage.EndInit();
+                        bitImage.Freeze();
+                        return bitImage;
+                    }
                 }
-
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("convert fail in bytes to BitmapImage: " + ex.Message);
                 return null;
             }
         }
@@ -429,51 +429,51 @@ namespace WxRobot
 
         private void Label_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            var el = sender as Label;
-            var saveList = new List<string>();
-            el.IsEnabled = false;
+            //var el = sender as Label;
+            //var saveList = new List<string>();
+            //el.IsEnabled = false;
 
-            foreach (var item in this.recentList.Items)
-            {
-                var cb = item as CheckBox;
-                var dp = cb.Content as DockPanel;
-                var lb = dp.Children[1] as Label;
-                if (lb.Foreground == Brushes.Red) saveList.Add(lb.Content as string);
-            }
+            //foreach (var item in this.recentList.Items)
+            //{
+            //    var cb = item as CheckBox;
+            //    var dp = cb.Content as DockPanel;
+            //    var lb = dp.Children[1] as Label;
+            //    if (lb.Foreground == Brushes.Red) saveList.Add(lb.Content as string);
+            //}
 
-            SetListBox(this.recentList, _wxSerivice.GetLatestContact());
+            //SetListBox(this.recentList, _wxSerivice.GetLatestContact());
 
-            Task.Run(() =>
-            {
-                var originList = saveList
-                .Select(o => Regex.Replace(o, @"\[Rule: .+\]", string.Empty))
-                .ToList();
+            //Task.Run(() =>
+            //{
+            //    var originList = saveList
+            //    .Select(o => Regex.Replace(o, @"\[Rule: .+\]", string.Empty))
+            //    .ToList();
 
-                this.recentList.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    el.IsEnabled = true;
+            //    this.recentList.Dispatcher.BeginInvoke(new Action(() =>
+            //    {
+            //        el.IsEnabled = true;
 
-                    foreach (var item in this.recentList.Items)
-                    {
-                        var cb = item as CheckBox;
-                        var dp = cb.Content as DockPanel;
-                        var lb = dp.Children[1] as Label;
+            //        foreach (var item in this.recentList.Items)
+            //        {
+            //            var cb = item as CheckBox;
+            //            var dp = cb.Content as DockPanel;
+            //            var lb = dp.Children[1] as Label;
 
-                        for (int i = 0; i < originList.Count; i++)
-                        {
-                            if (originList[i] != (lb.Content as string)) continue;
-                            lb.Foreground = Brushes.Red;
-                            lb.Content = saveList[i];
-                        }
-                    }
-                }));
-            });
+            //            for (int i = 0; i < originList.Count; i++)
+            //            {
+            //                if (originList[i] != (lb.Content as string)) continue;
+            //                lb.Foreground = Brushes.Red;
+            //                lb.Content = saveList[i];
+            //            }
+            //        }
+            //    }));
+            //});
         }
 
         private void Window_Closed(object sender, EventArgs e)
         {
             if (_arg != "plugin" && _wxSerivice != null)
-                _wxSerivice.LoginOut();
+                WXService.LoginOut();
             Environment.Exit(0);
         }
 

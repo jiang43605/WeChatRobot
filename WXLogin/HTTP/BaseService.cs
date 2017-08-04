@@ -23,22 +23,29 @@ namespace WXLogin
         /// </summary>
         /// <param name="url"></param>
         /// <returns></returns>
-        public static byte[] SendGetRequest(string url)
+        public static byte[] SendGetRequest(string url, CookieCollection cc = null)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "get";
+                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36";
+                request.KeepAlive = true;
 
                 if (CookiesContainer == null)
                 {
                     CookiesContainer = new CookieContainer();
                 }
-
-                request.CookieContainer = CookiesContainer;  //启用cookie
+                request.CookieContainer = new CookieContainer();  //启用cookie
+                request.CookieContainer.Add(CookiesContainer.GetCookies(new Uri(url)));
+                if (cc != null)
+                {
+                    request.CookieContainer.Add(cc);
+                }
 
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 Stream response_stream = response.GetResponseStream();
+                CookiesContainer.Add(response.Cookies);
 
                 int count = (int)response.ContentLength;
                 int offset = 0;
@@ -52,8 +59,14 @@ namespace WXLogin
                 }
                 return buf;
             }
-            catch
+            catch (TimeoutException t)
             {
+                Console.WriteLine("超时！" + t.Message);
+                return null;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
                 return null;
             }
         }
@@ -63,7 +76,7 @@ namespace WXLogin
         /// <param name="url"></param>
         /// <param name="body"></param>
         /// <returns></returns>
-        public static byte[] SendPostRequest(string url, string body, bool AllowAutoRedirect = false)
+        public static byte[] SendPostRequest(string url, string body, bool AllowAutoRedirect = false, CookieCollection cc = null)
         {
             try
             {
@@ -73,19 +86,26 @@ namespace WXLogin
                 request.Method = "post";
                 request.ContentLength = request_body.Length;
                 request.AllowAutoRedirect = AllowAutoRedirect;
-
-                Stream request_stream = request.GetRequestStream();
-
-                request_stream.Write(request_body, 0, request_body.Length);
+                request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36";
+                request.KeepAlive = true;
 
                 if (CookiesContainer == null)
                 {
                     CookiesContainer = new CookieContainer();
                 }
-                request.CookieContainer = CookiesContainer;  //启用cookie
+                request.CookieContainer = new CookieContainer();  //启用cookie
+                request.CookieContainer.Add(CookiesContainer.GetCookies(new Uri(url)));
+                if (cc != null)
+                {
+                    request.CookieContainer.Add(cc);
+                }
+
+                Stream request_stream = request.GetRequestStream();
+                request_stream.Write(request_body, 0, request_body.Length);
 
                 HttpWebResponse response = (HttpWebResponse)request.GetResponse();
                 Stream response_stream = response.GetResponseStream();
+                CookiesContainer.Add(response.Cookies);
 
                 int count = (int)response.ContentLength;
                 int offset = 0;
@@ -99,8 +119,14 @@ namespace WXLogin
                 }
                 return buf;
             }
-            catch
+            catch (TimeoutException t)
             {
+                Console.WriteLine("超时！" + t.Message);
+                return null;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
                 return null;
             }
         }
@@ -122,7 +148,12 @@ namespace WXLogin
             return null;
         }
 
-        private static List<Cookie> GetAllCookies(CookieContainer cc)
+        public static void SetCookie(string name, string value)
+        {
+            CookiesContainer.Add(new Cookie(name, value, "/", ".qq.com"));
+        }
+
+        public static List<Cookie> GetAllCookies(CookieContainer cc)
         {
             List<Cookie> lstCookies = new List<Cookie>();
 
@@ -156,6 +187,12 @@ namespace WXLogin
 
             var bf = new BinaryFormatter();
             CookiesContainer = bf.Deserialize(File.OpenRead(Path)) as CookieContainer;
+        }
+
+        public static string GetTime(int length=0)
+        {
+            var time = (long)(DateTime.Now.ToUniversalTime() - new System.DateTime(1970, 1, 1)).TotalMilliseconds;
+            return length == 0 ? time.ToString() : time.ToString().Substring(0,length);
         }
     }
 }

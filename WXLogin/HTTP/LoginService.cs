@@ -10,7 +10,7 @@ namespace WXLogin
     /// <summary>
     /// 微信登录服务类
     /// </summary>
-   public class LoginService
+    public class LoginService
     {
         public static string Pass_Ticket = "";
         public static string SKey = "";
@@ -71,6 +71,36 @@ namespace WXLogin
             string pass_ticket = Encoding.UTF8.GetString(bytes);
             Pass_Ticket = pass_ticket.Split(new string[] { "pass_ticket" }, StringSplitOptions.None)[1].TrimStart('>').TrimEnd('<', '/');
             SKey = pass_ticket.Split(new string[] { "skey" }, StringSplitOptions.None)[1].TrimStart('>').TrimEnd('<', '/');
+
+            BaseService.SetCookie("pgv_pvi", GetPgv());
+            BaseService.SetCookie("pgv_si", GetPgv("s"));
+            BaseService.SetCookie("MM_WX_NOTIFY_STATE", "1");
+            BaseService.SetCookie("MM_WX_SOUND_STATE", "1");
+            BaseService.SetCookie("last_wxuin", BaseService.GetCookie("wxuin").Value);
+            BaseService.SetCookie("login_frequency", "1");
+
+            var loadtime = BaseService.GetCookie("wxloadtime");
+            if (loadtime != null)
+            {
+                BaseService.SetCookie("wxloadtime", loadtime.Value /*+ "_expired"*/);
+            }
+            else
+            {
+                var time = (long)(DateTime.Now.ToUniversalTime() - new System.DateTime(1970, 1, 1)).TotalMilliseconds;
+                BaseService.SetCookie("wxloadtime", time.ToString().Substring(0, 10) /*+ "_expired"*/);
+            }
+        }
+
+        private string GetPgv(string str = "")
+        {
+            var r = new Random();
+            var num = r.NextDouble();
+            if (num == 0) num = 0.5;
+
+            var time = (long)(DateTime.Now.ToUniversalTime() - new System.DateTime(1970, 1, 1)).TotalMilliseconds;
+            var result = Math.Round(2147483647 * num) * +time % 1E10;
+
+            return str + result.ToString();
         }
     }
 }

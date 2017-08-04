@@ -11,6 +11,12 @@ namespace WXLogin
     /// </summary>
     public class WXUser
     {
+        // 用户类型
+        public UserType UserType { set; get; }
+        // 子用户，用于讨论组
+        public List<WXUser> MemberList { set; get; }
+        // 显示名称
+        public string DisplayName { set; get; }
         //用户id
         private string _userName;
         public string UserName
@@ -152,7 +158,7 @@ namespace WXLogin
                 {
                     _loading_icon = true;
 
-                    WXService wxs = new WXService();
+                    WXService wxs = WXService.Instance;
                     if (_userName.Contains("@@"))  //讨论组
                     {
                         _icon = wxs.GetHeadImg(_userName);
@@ -175,132 +181,40 @@ namespace WXLogin
         /// <summary>
         /// 显示名称
         /// </summary>
-        public string ShowName
-        {
-            get
-            {
-                return (_remarkName == null || _remarkName == "") ? _nickName : _remarkName;
-            }
-        }
+        public string ShowName => string.IsNullOrEmpty(_remarkName) ? _nickName : _remarkName;
+
         /// <summary>
         /// 显示的拼音全拼
         /// </summary>
-        public string ShowPinYin
-        {
-            get
-            {
-                return (_remarkPYQuanPin == null || _remarkPYQuanPin == "") ? _pyQuanPin : _remarkPYQuanPin;
-            }
-        }
+        public string ShowPinYin => string.IsNullOrEmpty(_remarkPYQuanPin) ? _pyQuanPin : _remarkPYQuanPin;
 
-        //发送给对方的消息  
-        private Dictionary<DateTime, WXMsg> _sentMsg = new Dictionary<DateTime, WXMsg>();
-        public Dictionary<DateTime, WXMsg> SentMsg
-        {
-            get
-            {
-                return _sentMsg;
-            }
-        }
-        //收到对方的消息
-        private Dictionary<DateTime, WXMsg> _recvedMsg = new Dictionary<DateTime, WXMsg>();
-        public Dictionary<DateTime, WXMsg> RecvedMsg
-        {
-            get
-            {
-                return _recvedMsg;
-            }
-        }
 
-        public event MsgSentEventHandler MsgSent;
-        public event MsgRecvedEventHandler MsgRecved;
-
-        /// <summary>
-        /// 接收来自该用户的消息
-        /// </summary>
-        /// <param name="msg"></param>
-        public void ReceiveMsg(WXMsg msg)
-        {
-            _recvedMsg.Add(msg.Time, msg);
-            if (MsgRecved != null)
-            {
-                MsgRecved(msg);
-            }
-        }
-        /// <summary>
-        /// 向该用户发送消息
-        /// </summary>
-        /// <param name="msg"></param>
-        public void SendMsg(WXMsg msg, bool showOnly)
-        {
-            //发送
-            if (!showOnly)
-            {
-                WXService wxs = new WXService();
-                wxs.SendMsg(msg.Msg, msg.From, msg.To, msg.Type);
-            }
-
-            _sentMsg.Add(msg.Time, msg);
-            if (MsgSent != null)
-            {
-                MsgSent(msg);
-            }
-        }
-        /// <summary>
-        /// 获取该用户发送的未读消息
-        /// </summary>
-        /// <returns></returns>
-        public List<WXMsg> GetUnReadMsg()
-        {
-            List<WXMsg> list = null;
-            foreach (KeyValuePair<DateTime, WXMsg> p in _recvedMsg)
-            {
-                if (!p.Value.Readed)
-                {
-                    if (list == null)
-                    {
-                        list = new List<WXMsg>();
-                    }
-                    list.Add(p.Value);
-                }
-            }
-
-            return list;
-        }
-        /// <summary>
-        /// 获取最近的一条消息
-        /// </summary>
-        /// <returns></returns>
-        public WXMsg GetLatestMsg()
-        {
-            WXMsg msg = null;
-            if (_sentMsg.Count > 0 && _recvedMsg.Count > 0)
-            {
-                msg = _sentMsg.Last().Value.Time > _recvedMsg.Last().Value.Time ? _sentMsg.Last().Value : _recvedMsg.Last().Value;
-            }
-            else if (_sentMsg.Count > 0)
-            {
-                msg = _sentMsg.Last().Value;
-            }
-            else if (_recvedMsg.Count > 0)
-            {
-                msg = _recvedMsg.Last().Value;
-            }
-            else
-            {
-                msg = null;
-            }
-            return msg;
-        }
     }
-    /// <summary>
-    /// 表示处理消息发送完成事件的方法
-    /// </summary>
-    /// <param name="msg"></param>
-    public delegate void MsgSentEventHandler(WXMsg msg);
-    /// <summary>
-    /// 表示处理接收到新消息事件的方法
-    /// </summary>
-    /// <param name="msg"></param>
-    public delegate void MsgRecvedEventHandler(WXMsg msg);
+
+    public class ChatRoomUser
+    {
+        public string DisplayName { set; get; }
+        public string NickName { set; get; }
+        public string PYQuanPin { set; get; }
+        public string UserName { set; get; }
+    }
+    public enum UserType
+    {
+        /// <summary>
+        /// 暂时未知
+        /// </summary>
+        Unkown,
+        /// <summary>
+        /// 朋友
+        /// </summary>
+        Friend,
+        /// <summary>
+        /// 公众号
+        /// </summary>
+        PublicFriend,
+        /// <summary>
+        /// 讨论组
+        /// </summary>
+        ChatRoom
+    }
 }

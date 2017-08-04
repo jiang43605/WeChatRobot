@@ -18,6 +18,9 @@
         <Style TargetType="RadioButton">
             <Setter Property="Margin" Value="0 3"></Setter>
         </Style>
+        <DataTemplate x:Key="listboxitem">
+            
+        </DataTemplate>
     </Window.Resources>
     <Grid>
         <Grid x:Name="loginInfo" Visibility="Visible">
@@ -26,6 +29,8 @@
                 <RowDefinition Height="1"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
+            <WindowsFormsHost Width="300" Height="300">
+            </WindowsFormsHost>
             <Image x:Name="codeImage" Width="300" Height="300" Stretch="Fill"></Image>
             <Rectangle Grid.Row="1" Fill="Gray" Margin="10 0"></Rectangle>
             <Label x:Name="loginLable" Grid.Row="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontWeight="Bold" Foreground="Gray"></Label>
