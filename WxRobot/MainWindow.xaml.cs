@@ -360,8 +360,17 @@ namespace WxRobot
 
             foreach (var item in finallyCheck)
             {
-                item.DisplayName = Regex.Replace(item.DisplayName, @"\[Rule: .+\]", string.Empty) + $"[Rule: {rule.Name}]";
-                item.FontColor = "#FFFF0000";
+                var originDisplayName = Regex.Replace(item.DisplayName, @"\[Rule: .+\]", string.Empty);
+                if (rule.Name.Equals(Rule.Default.Name))
+                {
+                    item.DisplayName = originDisplayName;
+                    item.FontColor = "#FF000000";
+                }
+                else
+                {
+                    item.DisplayName = originDisplayName + $"[Rule: {rule.Name}]";
+                    item.FontColor = "#FFFF0000";
+                }
 
                 var wxUser = _wxSerivice.AllContactCache.Single(o => o.UserName == item.UserName);
                 if (Rule.SetBingDing(wxUser, rule)) log += $"Bingding {rule.Name} rule into {wxUser.NickName}\r\n";

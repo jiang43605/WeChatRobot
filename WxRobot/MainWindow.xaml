@@ -23,7 +23,7 @@
         <DataTemplate x:Key="listboxitem">
             <CheckBox MaxHeight="20" IsChecked="{Binding Path=IsCheck, Mode=TwoWay}" Visibility="{Binding Path=Visiable, Mode=TwoWay, Converter={StaticResource visiableConvert}}">
                 <DockPanel>
-                    <Image Margin="0 1 0 3" Source="{Binding Path=BitMapImage, IsAsync=True}"></Image>
+                    <Image Margin="0 1 0 3" Source="{Binding Path=BitMapImage}"></Image>
                     <Label Padding="0" Content="{Binding Path=DisplayName}" Foreground="{Binding Path=FontColor}"></Label>
                 </DockPanel>
             </CheckBox>

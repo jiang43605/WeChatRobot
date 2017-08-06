@@ -46,6 +46,7 @@
     <Compile Include="HTTP\BaseService.cs" />
     <Compile Include="HTTP\LoginService.cs" />
     <Compile Include="HTTP\WXService.cs" />
+    <Compile Include="Objects\WXFace.cs" />
     <Compile Include="Objects\WXMsg.cs" />
     <Compile Include="Objects\WXUser.cs" />
     <Compile Include="Objects\WXUserViewModel.cs" />

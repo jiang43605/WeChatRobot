@@ -40,7 +40,7 @@ namespace WXLogin
             }
             set
             {
-                _nickName = value;
+                _nickName = WXService.DecodeMsgFace(value);
             }
         }
         //头像url
@@ -66,7 +66,7 @@ namespace WXLogin
             }
             set
             {
-                _remarkName = value;
+                _remarkName = WXService.DecodeMsgFace(value);
             }
         }
         //性别 男1 女2 其他0
@@ -188,6 +188,32 @@ namespace WXLogin
         /// </summary>
         public string ShowPinYin => string.IsNullOrEmpty(_remarkPYQuanPin) ? _pyQuanPin : _remarkPYQuanPin;
 
+        /// <summary>
+        /// 获取用户类型
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <param name="verifyflag"></param>
+        /// <returns></returns>
+        public static UserType GetUserType(string userName,string verifyflag)
+        {
+            // except for these, there also have some other type
+            // if you interest for this, please search "isBrand" key in
+            // chrome sources -> res.wx.qq.com -> a/wx_fed/webwx... -> js -> index_....js
+            // and you will see all user type
+            switch (userName)
+            {
+                case "newsapp":
+                    return UserType.NewsApp;
+                case "filehelper":
+                    return UserType.FileHelper;
+                case "fmessage":
+                    return UserType.Fmessage;
+            }
+
+            if (userName.StartsWith("@@")) return UserType.ChatRoom;
+            if (Convert.ToBoolean(int.Parse(verifyflag) & 8)) return UserType.BrandContact;
+            return UserType.Friend;
+        }
 
     }
 
@@ -211,10 +237,23 @@ namespace WXLogin
         /// <summary>
         /// 公众号
         /// </summary>
-        PublicFriend,
+        BrandContact,
         /// <summary>
         /// 讨论组
         /// </summary>
-        ChatRoom
+        ChatRoom,
+        /// <summary>
+        /// 新闻号
+        /// </summary>
+        NewsApp,
+        /// <summary>
+        /// Fmessage
+        /// </summary>
+        Fmessage,
+        /// <summary>
+        /// 文件助手
+        /// </summary>
+        FileHelper,
+
     }
 }

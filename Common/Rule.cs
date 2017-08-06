@@ -67,7 +67,7 @@ namespace Common
 
             if (!userName.StartsWith("@@"))
             {
-                return this._win.Dispatcher.Invoke(() => { return _dw.txt.Text; });
+                return this._win.Dispatcher.Invoke(() => _dw.txt.Text);
             }
             else
             {

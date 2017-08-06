@@ -5,8 +5,6 @@ using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Drawing;
-using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
@@ -20,12 +18,17 @@ namespace WXLogin
     public class WXService
     {
         private static WXService _wxService;
-        private static Dictionary<string, string> _syncKey = new Dictionary<string, string>();
         private JObject _initResult;
         private WXUser _me;
+        private readonly Dictionary<string, int> _unkownUserNameDic;
+        private static readonly Dictionary<string, string> _syncKey = new Dictionary<string, string>();
         public static readonly ObservableCollection<WXUserViewModel> RecentContactList = new ObservableCollection<WXUserViewModel>();
         public static readonly ObservableCollection<WXUserViewModel> AllContactList = new ObservableCollection<WXUserViewModel>();
 
+        /// <summary>
+        /// 尝试获取未知username的次数
+        /// </summary>
+        private const int TRYNUMOFGETINFO = 3;
         //微信初始化url
         private static string _init_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxinit?r=" + BaseService.GetTime(10);
         //获取好友头像
@@ -102,6 +105,8 @@ namespace WXLogin
 
         public WXService()
         {
+            _unkownUserNameDic = new Dictionary<string, int>();
+
             if (!WxInit()) throw new Exception("init error!");
             else
             {
@@ -164,7 +169,7 @@ namespace WXLogin
         /// <summary>
         /// 初始化和mobile的消息通信
         /// </summary>
-        public void Initstatusnotify()
+        private void Initstatusnotify()
         {
             Console.WriteLine("begin init Initstatusnotify()");
             var sid = BaseService.GetCookie("wxsid");
@@ -275,7 +280,7 @@ namespace WXLogin
         /// 获取好友列表
         /// </summary>
         /// <returns></returns>
-        public void InitContact()
+        private void InitContact()
         {
             var bytes = BaseService.SendGetRequest(_getcontact_url);
             var contact_str = Encoding.UTF8.GetString(bytes);
@@ -292,7 +297,7 @@ namespace WXLogin
             contact_all.AddRange(from JObject contact in contact_result["MemberList"]
                                  select new WXUser
                                  {
-                                     UserType = UserType.Friend,
+                                     UserType = WXUser.GetUserType(contact["UserName"].ToString(), contact["VerifyFlag"].ToString()),
                                      UserName = contact["UserName"].ToString(),
                                      City = contact["City"].ToString(),
                                      HeadImgUrl = contact["HeadImgUrl"].ToString(),
@@ -313,7 +318,7 @@ namespace WXLogin
         /// 获取所有好友列表,在初次初始化时候被调用
         /// </summary>
         /// <param name="msg"></param>
-        public async void InitAllContactAsync(string msg)
+        private async void InitAllContactAsync(string msg)
         {
             await Task.Run(() =>
              {
@@ -331,14 +336,14 @@ namespace WXLogin
         /// <summary>
         /// 获取最近好友列表
         /// </summary>
-        public void InitLatestContact()
+        private void InitLatestContact()
         {
             if (this._initResult == null) return;
             var list = _initResult["ContactList"].Select(contact =>
             {
                 var newUser = new WXUser
                 {
-                    UserType = UserType.Unkown,
+                    UserType = WXUser.GetUserType(contact["UserName"].ToString(), contact["VerifyFlag"].ToString()),
                     UserName = contact["UserName"].ToString(),
                     City = contact["City"].ToString(),
                     HeadImgUrl = contact["HeadImgUrl"].ToString(),
@@ -399,7 +404,7 @@ namespace WXLogin
                     Skey = LoginService.SKey,
                     Uin = uin.Value
                 },
-                Count = us.Count(),
+                Count = us.Length,
                 List = us.Select(o => new
                 {
                     EncryChatRoomId = string.Empty,
@@ -414,52 +419,53 @@ namespace WXLogin
 
             Console.WriteLine($"ContactList:" + jObject["Count"]);
             return jObject["ContactList"].Select(o =>
-             {
-                 var userName = o["UserName"].Value<string>();
-                 var remarkName = o["RemarkName"].Value<string>();
-                 var nickName = o["NickName"].Value<string>();
-                 var signature = o["Signature"].Value<string>();
-                 var headImgUrl = o["HeadImgUrl"].Value<string>();
-                 var pYQuanPin = o["PYQuanPin"].Value<string>();
-                 var remarkPYQuanPin = o["RemarkPYQuanPin"].Value<string>();
-                 if (userName.StartsWith("@@"))
-                 {
-                     return new WXUser
-                     {
-                         UserType = UserType.ChatRoom,
-                         UserName = userName,
-                         RemarkName = remarkName,
-                         NickName = nickName,
-                         Signature = signature,
-                         HeadImgUrl = headImgUrl,
-                         PYQuanPin = pYQuanPin,
-                         RemarkPYQuanPin = remarkPYQuanPin,
-                         MemberList = o["MemberList"].Select(k => new WXUser
-                         {
-                             DisplayName = k["DisplayName"].Value<string>(),
-                             NickName = k["NickName"].Value<string>(),
-                             PYQuanPin = k["PYQuanPin"].Value<string>(),
-                             UserName = k["UserName"].Value<string>()
-                         }).ToList()
-                     };
-                 }
-                 if (userName.StartsWith("@"))
-                 {
-                     return new WXUser
-                     {
-                         UserType = UserType.Unkown,
-                         UserName = userName,
-                         NickName = nickName,
-                         Signature = signature,
-                         HeadImgUrl = headImgUrl,
-                         PYQuanPin = pYQuanPin,
-                         RemarkPYQuanPin = remarkPYQuanPin,
-                     };
-                 }
+            {
+                var userType = WXUser.GetUserType(o["UserName"].ToString(), o["VerifyFlag"].ToString());
+                var userName = o["UserName"].Value<string>();
+                var remarkName = o["RemarkName"].Value<string>();
+                var nickName = o["NickName"].Value<string>();
+                var signature = o["Signature"].Value<string>();
+                var headImgUrl = o["HeadImgUrl"].Value<string>();
+                var pYQuanPin = o["PYQuanPin"].Value<string>();
+                var remarkPYQuanPin = o["RemarkPYQuanPin"].Value<string>();
+                if (userName.StartsWith("@@"))
+                {
+                    return new WXUser
+                    {
+                        UserType = userType,
+                        UserName = userName,
+                        RemarkName = remarkName,
+                        NickName = nickName,
+                        Signature = signature,
+                        HeadImgUrl = headImgUrl,
+                        PYQuanPin = pYQuanPin,
+                        RemarkPYQuanPin = remarkPYQuanPin,
+                        MemberList = o["MemberList"].Select(k => new WXUser
+                        {
+                            DisplayName = k["DisplayName"].Value<string>(),
+                            NickName = k["NickName"].Value<string>(),
+                            PYQuanPin = k["PYQuanPin"].Value<string>(),
+                            UserName = k["UserName"].Value<string>()
+                        }).ToList()
+                    };
+                }
+                if (userName.StartsWith("@"))
+                {
+                    return new WXUser
+                    {
+                        UserType = userType,
+                        UserName = userName,
+                        NickName = nickName,
+                        Signature = signature,
+                        HeadImgUrl = headImgUrl,
+                        PYQuanPin = pYQuanPin,
+                        RemarkPYQuanPin = remarkPYQuanPin,
+                    };
+                }
 
-                 Console.WriteLine($"unkown useName: " + userName);
-                 return null;
-             }).ToList();
+                Console.WriteLine($"unkown useName: " + userName);
+                return null;
+            }).Where(o => o != null).ToList();
         }
         /// <summary>
         /// 微信同步检测
@@ -629,14 +635,147 @@ namespace WXLogin
                 var unFromAll = AllContactCache.SingleOrDefault(o => o.UserName == userName);
                 if (unFromAll == null) return $"[{un.DisplayName}][unkown]";
                 var splitString = msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
-                return $"[{un.DisplayName}]{unFromAll.MemberList.SingleOrDefault(o => o.UserName == splitString)?.NickName}";
+                return $"[{un.DisplayName}]{unFromAll.MemberList.SingleOrDefault(o => o.UserName == splitString)?.ShowName}";
             }
 
             var unFromAll1 = AllContactCache.SingleOrDefault(o => o.UserName == userName);
-            if (unFromAll1 == null) return "[unkown]";
+            if (unFromAll1 == null)
+            {
+                if (!_unkownUserNameDic.ContainsKey(userName)) _unkownUserNameDic.Add(userName, 0);
+                if (_unkownUserNameDic[userName] > TRYNUMOFGETINFO) return "[unkown]";
+                Task.Run(() =>
+                {
+                    Console.WriteLine($"[{_unkownUserNameDic[userName] + 1}]Try to get user info from " + userName);
+                    var unkownUserInfo = GetBatchContact(new[] { userName }).FirstOrDefault();
+                    if (unkownUserInfo != null)
+                        UpdateItemsToListWithoutRepeat(AllContactCache, new[] { unkownUserInfo });
+                    _unkownUserNameDic[userName] += 1;
+                });
+
+                return "[unkown]";
+            }
             if (unFromAll1.UserType != UserType.ChatRoom) return unFromAll1.ShowName;
             var splitString1 = msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? string.Empty;
-            return $"[{unFromAll1.ShowName}]{unFromAll1.MemberList?.Single(o => o.UserName == splitString1).NickName}";
+            return $"[{unFromAll1.ShowName}]{unFromAll1.MemberList?.Single(o => o.UserName == splitString1).ShowName}";
+        }
+
+        /// <summary>
+        /// 转换消息或昵称中的表情标签
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <returns></returns>
+        public static string DecodeMsgFace(string msg)
+        {
+            if (msg == null) return null;
+            return Regex.Replace(msg, "<span class=\"emoji emoji([a-zA-Z0-9]+)\"></span>", match =>
+             {
+                 var emojiValue = match.Groups[1].Value;
+                 if (!WXFace.Face.ContainsKey(emojiValue)) return "[表情]";
+
+                 return $"[{WXFace.Face[emojiValue].Trim('<', '>')}]";
+             });
+        }
+
+        public static string HtmlEncode(string html)
+        {
+            return html?.Replace("&", "&amp;").Replace("\"", "&quot;").Replace("'", "&#39;").Replace("<", "&lt;")
+                .Replace(">", "&gt");
+        }
+
+        public static string HtmlDecode(string html)
+        {
+            return html?.Replace("&lt;", "<").Replace("&gt;", ">").Replace("&#39;", "'").Replace("&quot;", "\"")
+                .Replace("&amp;", "&");
+        }
+
+        /// <summary>
+        /// 更新msg的格式,去除tag类东西
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="msgType"></param>
+        /// <param name="appMsgType"></param>
+        /// <param name="subMsgType"></param>
+        /// <param name="fromUserName"></param>
+        /// <returns></returns>
+        public string GetPureMsg(string msg, string msgType, string appMsgType, string subMsgType, string fromUserName)
+        {
+            if (fromUserName.StartsWith("@@"))
+            {
+                msg = Regex.Replace(msg, @"^(@[a-zA-Z0-9]+|[a-zA-Z0-9_-]+):<br/>", string.Empty);
+            }
+
+            // text msg
+            if (msgType == "1")
+            {
+                if (subMsgType == "48")
+                    return $"对方给你发来位置信息: {msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries)[0]}";
+                if (fromUserName.StartsWith("@@")) // 群消息
+                    return DecodeMsgFace(msg);
+                return fromUserName.Equals("newsapp") ? "[腾讯新闻消息]" : DecodeMsgFace(msg);
+            }
+
+            // maybe from brand contact
+            if (msgType == "49")
+            {
+                if (appMsgType == "5")
+                {
+                    // brandContact msg
+                    var msged = AllContactCache.Single(o => o.UserName == fromUserName).UserType != UserType.BrandContact?
+                        "[链接]: " : "来自公众号的消息: ";
+                    var el = System.Xml.Linq.XElement.Parse(HtmlDecode(msg).Replace("<br/>", string.Empty));
+                    var allItems = el.Element("appmsg")?.Element("mmreader")?.Element("category")?.Elements("item");
+                    if (allItems == null)
+                    {
+                        msged += "\r\nTitle: " + DecodeMsgFace(el.Element("appmsg")?.Element("title")?.Value);
+                        msged += "\r\nDigest: " + DecodeMsgFace(el.Element("appmsg")?.Element("des")?.Value);
+                        //msged += "\r\nUrl: " + DecodeMsgFace(el.Element("appmsg")?.Element("url")?.Value);
+
+                        return msged;
+                    }
+
+                    foreach (var item in allItems)
+                    {
+                        var title = DecodeMsgFace(item.Element("title")?.Value);
+                        //var url = item.Element("url")?.Value;
+                        var digest = DecodeMsgFace(item.Element("digest")?.Value);
+
+                        msged += $"\r\nTitle: [{title}]\r\nDigest: [{digest}]"/*\r\nUrl: [{url}]*/;
+                    }
+
+                    return msged;
+                }
+
+                switch (appMsgType)
+                {
+                    case "2000":
+                        return "[对方向你转账消息]";
+                }
+            }
+
+            // other msg
+            switch (msgType)
+            {
+                case "3":
+                    return "[图片消息]";
+                case "47":
+                    return "[对方收藏图片]";
+                case "34":
+                    return "[语音消息]";
+                case "43":
+                    return "[视频]";
+                case "62":
+                    return "[小视频]";
+                case "53":
+                    return "[对方语音或视频呼叫你]";
+                case "10000": // 包含红包消息
+                    return msg;
+                case "42":
+                    return $"她向你推荐了名片: [{DecodeMsgFace(Regex.Match(msg, "nickname=\"(.*)\"").Groups[1].Value)}]";
+                case "10002":
+                    return "[对方撤回了一条消息]";
+            }
+
+            return msg;
         }
 
         /// <summary>
@@ -679,16 +818,26 @@ namespace WXLogin
                 Task.Run(() =>
                 {
                     var numFlag = default(int);
-                    var msgs = sync_result["AddMsgList"].Select(m => new WXMsg
+                    var msgs = sync_result["AddMsgList"].Select(m =>
                     {
-                        From = m["FromUserName"].ToString(),
-                        FromNickName = GetNickName(m["FromUserName"].ToString(), m["Content"].ToString()),
-                        Msg = m["Content"].ToString(),
-                        Readed = false,
-                        Time = DateTime.Now,
-                        To = m["ToUserName"].ToString(),
-                        ToNickName = GetNickName(m["ToUserName"].ToString(), m["Content"].ToString()),
-                        Type = int.Parse(m["MsgType"].ToString())
+                        var fromUserName = m["FromUserName"].ToString();
+                        var toUserName = m["ToUserName"].ToString();
+                        var msg = m["Content"].ToString();
+                        var msgType = m["MsgType"].ToString();
+                        var pureMsg = GetPureMsg(msg, msgType, m["AppMsgType"].ToString(), m["SubMsgType"].ToString(),
+                            fromUserName);
+
+                        return new WXMsg
+                        {
+                            From = fromUserName,
+                            FromNickName = GetNickName(fromUserName, msg),
+                            Msg = pureMsg,
+                            Readed = false,
+                            Time = DateTime.Now,
+                            To = toUserName,
+                            ToNickName = GetNickName(toUserName, msg),
+                            Type = int.Parse(msgType)
+                        };
                     });
 
                     numFlag = msgs.Count();
