@@ -20,7 +20,6 @@ namespace WxRobot
     public partial class MainWindow : Window
     {
         private WXService _wxSerivice;
-        private IEnumerable<CheckBox> _allFriend;
         private string _arg;
         public MainWindow()
         {
@@ -121,6 +120,20 @@ namespace WxRobot
             {
                 try
                 {
+                    // create msg handle assembly
+                    var allFile = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory)
+                    .Where(o => Path.GetExtension(o) == ".dll");
+                    foreach (var file in allFile)
+                    {
+                        var type = Assembly.LoadFrom(file).GetTypes()
+                        .FirstOrDefault(o => o != typeof(IWXMsgHandle) && typeof(IWXMsgHandle).IsAssignableFrom(o));
+
+                        if (type == null) continue;
+                        _wxSerivice.MsgHandle = Activator.CreateInstance(type) as IWXMsgHandle;
+                        break;
+                    }
+
+                    // begin Listen the msg
                     _wxSerivice.Listening(ListeningHandle);
                 }
                 catch (LoginOutException)
@@ -170,7 +183,7 @@ namespace WxRobot
 
                 foreach (var item in Directory.GetFiles(path))
                 {
-                    if (System.IO.Path.GetExtension(item) != ".dll" && System.IO.Path.GetExtension(item) != ".exe") continue;
+                    if (Path.GetExtension(item) != ".dll" && Path.GetExtension(item) != ".exe") continue;
 
                     var tp = Assembly.LoadFrom(item).GetTypes().FirstOrDefault(o => o.Name == "Rule");
                     if (tp == null) continue;
@@ -184,9 +197,11 @@ namespace WxRobot
 
                     // set SendMsg value
                     tp.GetProperty("SendMsg")?.SetValue(obj, new Action<string, string>((to, msg) =>
-                     {
-                         _wxSerivice.SendMsgAsync(msg, _wxSerivice.Me.UserName, to, 1);
-                     }));
+                    {
+                        PrintLin($"[{_wxSerivice.Me.ShowName}] - [{_wxSerivice.GetNickName(to, msg)}] - {DateTime.Now}");
+                        PrintLin($"Msg: {msg}\r\n");
+                        _wxSerivice.SendMsgAsync(msg, _wxSerivice.Me.UserName, to, 1);
+                    }));
 
                     if (_arg != "plugin")
                         tp.GetProperty("Me")?.SetValue(obj, new Tuple<string, string>(_wxSerivice.Me.NickName, _wxSerivice.Me.UserName));
@@ -200,11 +215,8 @@ namespace WxRobot
         {
             foreach (var item in msgs)
             {
-                var reMsg = default(string);
+                string reMsg;
                 var msg = item.Msg;
-                // update LatestContact
-                // and will cache the user
-                UpdateLatestContact(item);
 
                 PrintLin($"[{item.FromNickName}] - [{item.ToNickName}] - {DateTime.Now}");
                 PrintLin($"Msg: {msg}");
@@ -223,7 +235,7 @@ namespace WxRobot
                     {
                         PrintLin(); continue;
                     }
-                    reMsg = toRule.FromMeInvoke(toUser.UserName, msg, item.Type);
+                    reMsg = toRule.FromMeInvoke(toUser.UserName, msg, item.Type, (int)toUser.UserType);
                 }
                 else
                 {
@@ -239,8 +251,8 @@ namespace WxRobot
                     if (rule.Name == "Default")
                     {
                         PrintLin(); continue;
-                    };
-                    reMsg = rule.Invoke(user.UserName, msg, item.Type);
+                    }
+                    reMsg = rule.Invoke(user.UserName, msg, item.Type, (int)user.UserType);
                 }
 
                 PrintLin($"ReMsg: {reMsg}");
@@ -253,28 +265,6 @@ namespace WxRobot
                 }
             }
         }
-
-        private void UpdateLatestContact(WXMsg item)
-        {
-            foreach (var user in new[] { item.From, item.To }
-            .Where(o => !WXService.RecentContactList.Any(k => k.UserName == o)))
-            {
-                var newUser = _wxSerivice.AllContactCache.SingleOrDefault(o => o.UserName == user);
-                if (newUser == null) return;
-
-                Dispatcher.InvokeAsync(() =>
-                {
-                    WXService.RecentContactList.Add(new WXUserViewModel
-                    {
-                        DisplayName = newUser.ShowName,
-                        HeadImgUrl = newUser.HeadImgUrl,
-                        UserName = newUser.UserName,
-                        UserType = newUser.UserType
-                    });
-                });
-            }
-        }
-
         private void SetRuleListBox(object exObj)
         {
             this.Dispatcher.BeginInvoke(new Action<object>((obj) =>
@@ -361,6 +351,15 @@ namespace WxRobot
             foreach (var item in finallyCheck)
             {
                 var originDisplayName = Regex.Replace(item.DisplayName, @"\[Rule: .+\]", string.Empty);
+
+                var wxUser = _wxSerivice.AllContactCache.SingleOrDefault(o => o.UserName == item.UserName);
+                if (Rule.SetBingDing(wxUser, rule)) log += $"Bingding {rule.Name} rule into {wxUser?.ShowName}\r\n";
+                else
+                {
+                    rule = Rule.Default;
+                    log += $"Fail Bingding {rule.Name} rule into {item.DisplayName} \r\n";
+                }
+
                 if (rule.Name.Equals(Rule.Default.Name))
                 {
                     item.DisplayName = originDisplayName;
@@ -371,10 +370,6 @@ namespace WxRobot
                     item.DisplayName = originDisplayName + $"[Rule: {rule.Name}]";
                     item.FontColor = "#FFFF0000";
                 }
-
-                var wxUser = _wxSerivice.AllContactCache.Single(o => o.UserName == item.UserName);
-                if (Rule.SetBingDing(wxUser, rule)) log += $"Bingding {rule.Name} rule into {wxUser.NickName}\r\n";
-                else log += $"Fail Bingding {rule.Name} rule into {wxUser.NickName}\r\n";
             }
 
             PrintLin(log);

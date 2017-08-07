@@ -42,6 +42,10 @@ namespace Common
             set;
             get;
         }
+        /// <summary>
+        /// self
+        /// </summary>
+        public Tuple<string, string> Me { set; get; }
 
         /// <summary>
         /// when user click in control panel
@@ -62,10 +66,10 @@ namespace Common
             }
         }
 
-        public string MsgHandle(string userName, string msg, int type)
+        public string MsgHandle(string userName, string msg, int type, int userType)
         {
 
-            if (!userName.StartsWith("@@"))
+            if (userType == 2 || userType == 8 && msg.Contains("@" + Me.Item1))
             {
                 return this._win.Dispatcher.Invoke(() => _dw.txt.Text);
             }

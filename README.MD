@@ -45,9 +45,9 @@ msg:消息
 | Me | `Tuple<string, string>` | 属性，`item1`表示`nickName`，`item2`表示`userName` |
 | SendMsg | `Action<string, string>` | 属性，用于发送消息，使用：`SendMsg(arg1,arg2)`，`arg1`表示要发送用户的`userName`，`arg2`表示要发送的消息 |
 | Click | `void Click()` | 方法，当用户点击该规则时触发的操作 |
-| MsgHandle | `string MsgHandle(string userName, string msg, int type)` | 方法，当该用户发消息过来，调用该方法，`type`表示消息类型，请上网查阅具体含义 |
-| BingDing | `void BingDing(string userName)` | 方法，用户第一次应用该规则时触发 |
-| FromMe | `string FromMe(string userName, string msg, int type)` | 方法，当用户自己从其它设备上回复消息时，触发该方法 |
+| MsgHandle | `string MsgHandle(string userName, string msg, int type, int userType)` | 方法，当该用户发消息过来，调用该方法，`type`表示消息类型，请上网查阅具体含义 |
+| BingDing | `void BingDing(string userName, int userType)` | 方法，用户第一次应用该规则时触发 |
+| FromMe | `string FromMe(string userName, string msg, int type, int userType)` | 方法，当用户自己从其它设备上回复消息时，触发该方法 |
 
 **以上接口不强制要求写，不保证接口稳定，如果编写的扩展代码逻辑错误或抛出异常，可能导致主界面崩溃。。。排查时请考虑主程序代码有bug**
 
@@ -61,4 +61,4 @@ msg:消息
 #### 2017.08.06
 
 - 更细致的模拟微信，减少可能的异常
-- 格式化消息
+- 格式化所有的消息，不会再有莫名其妙的文字，它处理消息的优先级要大于插件。它是通过`IWXMsgHandle`接口来实现的，提供一个默认实现：`DefaultMsgHandle.dll`，位于主程序目录下，若要自定义，直接替换它即可

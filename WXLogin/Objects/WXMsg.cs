@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace WXLogin
 {
@@ -65,5 +66,13 @@ namespace WXLogin
             get;
             set;
         }
+    }
+
+    /// <summary>
+    /// interface for handle wx msg
+    /// </summary>
+    public interface IWXMsgHandle
+    {
+        string Handle(JToken msgInfo);
     }
 }

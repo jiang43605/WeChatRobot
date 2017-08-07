@@ -19,7 +19,7 @@ namespace WXLogin
     {
         private static WXService _wxService;
         private JObject _initResult;
-        private WXUser _me;
+        private IWXMsgHandle _msgHandle;
         private readonly Dictionary<string, int> _unkownUserNameDic;
         private static readonly Dictionary<string, string> _syncKey = new Dictionary<string, string>();
         public static readonly ObservableCollection<WXUserViewModel> RecentContactList = new ObservableCollection<WXUserViewModel>();
@@ -74,13 +74,18 @@ namespace WXLogin
             }
         }
 
-        public WXUser Me
+        /// <summary>
+        /// 本人账号
+        /// </summary>
+        public WXUser Me { set; get; }
+
+        public IWXMsgHandle MsgHandle
         {
-            set { this._me = value; }
-            get { return this._me; }
+            set => _msgHandle = value;
         }
 
         public SynchronizationContext SynchronizationContext { set; get; }
+
 
         public string GetDeviceid
         {
@@ -110,17 +115,17 @@ namespace WXLogin
             if (!WxInit()) throw new Exception("init error!");
             else
             {
-                _me = new WXUser();
-                _me.UserName = _initResult["User"]["UserName"].ToString();
-                _me.City = "";
-                _me.HeadImgUrl = _initResult["User"]["HeadImgUrl"].ToString();
-                _me.NickName = _initResult["User"]["NickName"].ToString();
-                _me.Province = "";
-                _me.PYQuanPin = _initResult["User"]["PYQuanPin"].ToString();
-                _me.RemarkName = _initResult["User"]["RemarkName"].ToString();
-                _me.RemarkPYQuanPin = _initResult["User"]["RemarkPYQuanPin"].ToString();
-                _me.Sex = _initResult["User"]["Sex"].ToString();
-                _me.Signature = _initResult["User"]["Signature"].ToString();
+                Me = new WXUser();
+                Me.UserName = _initResult["User"]["UserName"].ToString();
+                Me.City = "";
+                Me.HeadImgUrl = _initResult["User"]["HeadImgUrl"].ToString();
+                Me.NickName = _initResult["User"]["NickName"].ToString();
+                Me.Province = "";
+                Me.PYQuanPin = _initResult["User"]["PYQuanPin"].ToString();
+                Me.RemarkName = _initResult["User"]["RemarkName"].ToString();
+                Me.RemarkPYQuanPin = _initResult["User"]["RemarkPYQuanPin"].ToString();
+                Me.Sex = _initResult["User"]["Sex"].ToString();
+                Me.Signature = _initResult["User"]["Signature"].ToString();
 
                 Initstatusnotify();
             }
@@ -687,99 +692,37 @@ namespace WXLogin
             return html?.Replace("&lt;", "<").Replace("&gt;", ">").Replace("&#39;", "'").Replace("&quot;", "\"")
                 .Replace("&amp;", "&");
         }
-
         /// <summary>
-        /// 更新msg的格式,去除tag类东西
+        /// update the RecentContactList by msg
         /// </summary>
-        /// <param name="msg"></param>
-        /// <param name="msgType"></param>
-        /// <param name="appMsgType"></param>
-        /// <param name="subMsgType"></param>
-        /// <param name="fromUserName"></param>
-        /// <returns></returns>
-        public string GetPureMsg(string msg, string msgType, string appMsgType, string subMsgType, string fromUserName)
+        /// <param name="items"></param>
+        private async void UpdateLatestContactAsync(IEnumerable<WXMsg> items)
         {
-            if (fromUserName.StartsWith("@@"))
-            {
-                msg = Regex.Replace(msg, @"^(@[a-zA-Z0-9]+|[a-zA-Z0-9_-]+):<br/>", string.Empty);
-            }
+            await Task.Run(() =>
+             {
+                 foreach (var item in items)
+                     foreach (var user in new[] { item.From, item.To }
+                         .Where(o => !WXService.RecentContactList.Any(k => k.UserName == o)))
+                     {
+                         var newUser = AllContactCache.SingleOrDefault(o => o.UserName == user);
+                         if (newUser == null) return;
 
-            // text msg
-            if (msgType == "1")
-            {
-                if (subMsgType == "48")
-                    return $"对方给你发来位置信息: {msg.Split(new[] { ":<br/>" }, StringSplitOptions.RemoveEmptyEntries)[0]}";
-                if (fromUserName.StartsWith("@@")) // 群消息
-                    return DecodeMsgFace(msg);
-                return fromUserName.Equals("newsapp") ? "[腾讯新闻消息]" : DecodeMsgFace(msg);
-            }
-
-            // maybe from brand contact
-            if (msgType == "49")
-            {
-                if (appMsgType == "5")
-                {
-                    // brandContact msg
-                    var msged = AllContactCache.Single(o => o.UserName == fromUserName).UserType != UserType.BrandContact?
-                        "[链接]: " : "来自公众号的消息: ";
-                    var el = System.Xml.Linq.XElement.Parse(HtmlDecode(msg).Replace("<br/>", string.Empty));
-                    var allItems = el.Element("appmsg")?.Element("mmreader")?.Element("category")?.Elements("item");
-                    if (allItems == null)
-                    {
-                        msged += "\r\nTitle: " + DecodeMsgFace(el.Element("appmsg")?.Element("title")?.Value);
-                        msged += "\r\nDigest: " + DecodeMsgFace(el.Element("appmsg")?.Element("des")?.Value);
-                        //msged += "\r\nUrl: " + DecodeMsgFace(el.Element("appmsg")?.Element("url")?.Value);
-
-                        return msged;
-                    }
-
-                    foreach (var item in allItems)
-                    {
-                        var title = DecodeMsgFace(item.Element("title")?.Value);
-                        //var url = item.Element("url")?.Value;
-                        var digest = DecodeMsgFace(item.Element("digest")?.Value);
-
-                        msged += $"\r\nTitle: [{title}]\r\nDigest: [{digest}]"/*\r\nUrl: [{url}]*/;
-                    }
-
-                    return msged;
-                }
-
-                switch (appMsgType)
-                {
-                    case "2000":
-                        return "[对方向你转账消息]";
-                }
-            }
-
-            // other msg
-            switch (msgType)
-            {
-                case "3":
-                    return "[图片消息]";
-                case "47":
-                    return "[对方收藏图片]";
-                case "34":
-                    return "[语音消息]";
-                case "43":
-                    return "[视频]";
-                case "62":
-                    return "[小视频]";
-                case "53":
-                    return "[对方语音或视频呼叫你]";
-                case "10000": // 包含红包消息
-                    return msg;
-                case "42":
-                    return $"她向你推荐了名片: [{DecodeMsgFace(Regex.Match(msg, "nickname=\"(.*)\"").Groups[1].Value)}]";
-                case "10002":
-                    return "[对方撤回了一条消息]";
-            }
-
-            return msg;
+                         SynchronizationContext.Post((p) =>
+                         {
+                             lock(RecentContactList)
+                             WXService.RecentContactList.Add(new WXUserViewModel
+                             {
+                                 DisplayName = newUser.ShowName,
+                                 HeadImgUrl = newUser.HeadImgUrl,
+                                 UserName = newUser.UserName,
+                                 UserType = newUser.UserType
+                             });
+                         }, null);
+                     }
+             });
         }
-
         /// <summary>
-        /// 监听消息
+        /// 监听消息，注意，这会阻塞当前进程
         /// </summary>
         /// <param name="msgAction"></param>
         public void Listening(Action<IEnumerable<WXMsg>> msgAction)
@@ -824,8 +767,7 @@ namespace WXLogin
                         var toUserName = m["ToUserName"].ToString();
                         var msg = m["Content"].ToString();
                         var msgType = m["MsgType"].ToString();
-                        var pureMsg = GetPureMsg(msg, msgType, m["AppMsgType"].ToString(), m["SubMsgType"].ToString(),
-                            fromUserName);
+                        var pureMsg = _msgHandle == null ? msg : _msgHandle.Handle(m);
 
                         return new WXMsg
                         {
@@ -851,7 +793,9 @@ namespace WXLogin
                     }
 
                     if (numFlag == 0) return;
-                    msgAction?.Invoke(msgs.Where(o => o.Type != 51));
+                    var filterMsg = msgs.Where(o => o.Type != 51);
+                    UpdateLatestContactAsync(filterMsg);
+                    msgAction?.Invoke(filterMsg);
                 });
             }
         }

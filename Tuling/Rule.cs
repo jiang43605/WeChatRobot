@@ -56,15 +56,15 @@ namespace Tuling
             }
         }
 
-        public string MsgHandle(string userName, string msg, int type)
+        public string MsgHandle(string userName, string msg, int type, int userType)
         {
-            var time = this._win.Dispatcher.Invoke(() => { return int.Parse(_dw.time.Text); });
-            var replaceDic = this._win.Dispatcher.Invoke(() => { return _dw.ReplaceDic; });
-            var key = this._win.Dispatcher.Invoke(() => { return _dw.apiKey.Text; });
+            var time = this._win.Dispatcher.Invoke(() => int.Parse(_dw.time.Text));
+            var replaceDic = this._win.Dispatcher.Invoke(() => _dw.ReplaceDic);
+            var key = this._win.Dispatcher.Invoke(() => _dw.apiKey.Text);
 
             if (string.IsNullOrEmpty(key)) return null;
             var reMsg = _tc.GetChat(key, RuleUser.ContainsKey(userName) ? RuleUser[userName] : "null", msg);
-            var isRandom = this._win.Dispatcher.Invoke(() => { return _dw.isRandom.IsChecked; });
+            var isRandom = this._win.Dispatcher.Invoke(() => _dw.isRandom.IsChecked);
 
             foreach (var item in replaceDic)
             {
@@ -76,15 +76,11 @@ namespace Tuling
                 time = (new Random()).Next(1000 * time);
             }
 
-            if (msg.Contains("@" + Me.Item1) || (type == 1 && !userName.StartsWith("@@")))
-            {
-                System.Threading.Thread.Sleep(time);
-                return reMsg;
-            }
-            else
-            {
-                return null;
-            }
+            if (userType == 8 && !msg.Contains("@" + Me.Item1)) return null;
+
+            System.Threading.Thread.Sleep(time);
+            return reMsg;
+
         }
     }
 }

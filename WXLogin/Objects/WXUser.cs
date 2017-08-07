@@ -194,7 +194,7 @@ namespace WXLogin
         /// <param name="userName"></param>
         /// <param name="verifyflag"></param>
         /// <returns></returns>
-        public static UserType GetUserType(string userName,string verifyflag)
+        public static UserType GetUserType(string userName, string verifyflag)
         {
             // except for these, there also have some other type
             // if you interest for this, please search "isBrand" key in
@@ -229,31 +229,31 @@ namespace WXLogin
         /// <summary>
         /// 暂时未知
         /// </summary>
-        Unkown,
+        Unkown = 0,
         /// <summary>
         /// 朋友
         /// </summary>
-        Friend,
+        Friend = 2,
         /// <summary>
         /// 公众号
         /// </summary>
-        BrandContact,
+        BrandContact = 4,
         /// <summary>
         /// 讨论组
         /// </summary>
-        ChatRoom,
+        ChatRoom = 8,
         /// <summary>
         /// 新闻号
         /// </summary>
-        NewsApp,
+        NewsApp = 16,
         /// <summary>
         /// Fmessage
         /// </summary>
-        Fmessage,
+        Fmessage = 32,
         /// <summary>
         /// 文件助手
         /// </summary>
-        FileHelper,
+        FileHelper = 64
 
     }
 }

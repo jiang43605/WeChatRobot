@@ -58,11 +58,11 @@ namespace Intervals
 
         public Tuple<string, string> Me { set; get; }
 
-        public string MsgHandle(string userName, string msg, int type)
+        public string MsgHandle(string userName, string msg, int type, int userType)
         {
             var isAutoCheck = this._win.Dispatcher.Invoke(() => { return this._dw.autoCheckBox.IsChecked; });
 
-            if (isAutoCheck == true && (msg.Contains("@" + Me.Item1) || (type == 1 && !userName.StartsWith("@@"))))
+            if (isAutoCheck == true && (userType == 2 || userType == 8 && msg.Contains("@" + Me.Item1)))
             {
                 var autoContent = this._win.Dispatcher.Invoke(() => { return this._dw.autoContent.Text; });
                 var autoTime = this._win.Dispatcher.Invoke(() => { return int.Parse(this._dw.autoTime.Text); });
@@ -94,7 +94,7 @@ namespace Intervals
             return null;
         }
 
-        public string FromMe(string userName, string msg, int type)
+        public string FromMe(string userName, string msg, int type, int userType)
         {
             if (_waitForReturnUser.ContainsKey(userName))
             {
@@ -109,7 +109,7 @@ namespace Intervals
             return null;
         }
 
-        public void BingDing(string userName)
+        public void BingDing(string userName, int userType)
         {
             var isIntervalCheck = this._win.Dispatcher.Invoke(() => { return this._dw.intervalCheckBox.IsChecked; });
 
@@ -127,7 +127,7 @@ namespace Intervals
 
                     var intervalContent = this._win.Dispatcher.Invoke(() => { return this._dw.intervalContent.Text; });
                     intervalTime = this._win.Dispatcher.Invoke(() => { return int.Parse(this._dw.intervalTime.Text); });
-                    timer.Interval = intervalTime *1000;
+                    timer.Interval = intervalTime * 1000;
                     SendMsg(userName, intervalContent);
                     timer.Start();
                 };

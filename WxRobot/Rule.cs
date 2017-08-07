@@ -39,7 +39,7 @@ namespace WxRobot
 
             if (r.Name == Rule.Default.Name) return true;
             r.SetUser(user.UserName, user.NickName);
-            r.BingDingAsync(user.UserName);
+            r.BingDingAsync(user.UserName, (int)user.UserType);
             return true;
         }
         private Rule(string name)
@@ -77,21 +77,22 @@ namespace WxRobot
         /// when user BingDing a rule
         /// </summary>
         /// <param name="userName"></param>
-        public async void BingDingAsync(string userName)
+        /// <param name="userType"></param>
+        public async void BingDingAsync(string userName, int userType)
         {
             await Task.Run(() =>
             {
-                this._obj.GetType().GetMethod("BingDing")?.Invoke(this._obj, new object[] { userName });
+                this._obj.GetType().GetMethod("BingDing")?.Invoke(this._obj, new object[] { userName, userType });
             });
         }
-        public string Invoke(string userName, string msg, int type)
+        public string Invoke(string userName, string msg, int type, int userType)
         {
-            return this._obj.GetType().GetMethod("MsgHandle")?.Invoke(this._obj, new object[] { userName, msg, type }) as string;
+            return this._obj.GetType().GetMethod("MsgHandle")?.Invoke(this._obj, new object[] { userName, msg, type, userType }) as string;
         }
 
-        public string FromMeInvoke(string toUserName, string msg, int type)
+        public string FromMeInvoke(string toUserName, string msg, int type, int userType)
         {
-            return this._obj.GetType().GetMethod("FromMe")?.Invoke(this._obj, new object[] { toUserName, msg, type }) as string;
+            return this._obj.GetType().GetMethod("FromMe")?.Invoke(this._obj, new object[] { toUserName, msg, type, userType }) as string;
         }
     }
 }
