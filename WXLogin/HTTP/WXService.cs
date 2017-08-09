@@ -50,7 +50,7 @@ namespace WXLogin
         // login out
         public const string _loginOut_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey=";
 
-
+        public event Func<WXUserViewModel, WXMsg, bool> UpdateMsgToWxUsering;
         public static WXService Instance
         {
             get
@@ -111,6 +111,18 @@ namespace WXLogin
         public WXService()
         {
             _unkownUserNameDic = new Dictionary<string, int>();
+
+            RecentContactList.CollectionChanged += (a, b) =>
+            {
+                foreach (WXUserViewModel item in b.NewItems)
+                {
+                    if (RecentContactList.Count(o => o.UserName == item.UserName) > 1)
+                    {
+                        Console.WriteLine(item.DisplayName);
+                    }
+                }
+
+            };
 
             if (!WxInit()) throw new Exception("init error!");
             else
@@ -270,19 +282,30 @@ namespace WXLogin
                             exsitItem.HeadImgUrl = item.HeadImgUrl;
                             return;
                         }
-                        temp.Add(new WXUserViewModel
+
+                        // if call InitContact() was before InitLatestContact()
+                        // then the following code should be replaced: 
+                        // var model = AllContactList.SingleOrDefault(o => o.UserName == item.UserName);
+                        var model = RecentContactList.SingleOrDefault(o => o.UserName == item.UserName);
+                        // ===================================================================================
+
+                        if (model != null) temp.Add(model);
+                        else
                         {
-                            DisplayName = item.ShowName,
-                            UserType = item.UserType,
-                            HeadImgUrl = item.HeadImgUrl,
-                            UserName = item.UserName
-                        });
+                            temp.Add(new WXUserViewModel
+                            {
+                                DisplayName = item.ShowName,
+                                UserType = item.UserType,
+                                HeadImgUrl = item.HeadImgUrl,
+                                UserName = item.UserName
+                            });
+                        }
                     }, null);
                 }
             }
         }
         /// <summary>
-        /// 获取好友列表
+        /// 获取好友列表，必须在初始化最近好友之后
         /// </summary>
         /// <returns></returns>
         private void InitContact()
@@ -317,6 +340,7 @@ namespace WXLogin
                                  });
 
             AllContactCache = contact_all;
+
             UpdateItemsToListWithoutRepeat(AllContactList, contact_all);
         }
         /// <summary>
@@ -699,27 +723,46 @@ namespace WXLogin
         private async void UpdateLatestContactAsync(IEnumerable<WXMsg> items)
         {
             await Task.Run(() =>
-             {
-                 foreach (var item in items)
-                     foreach (var user in new[] { item.From, item.To }
-                         .Where(o => !WXService.RecentContactList.Any(k => k.UserName == o)))
-                     {
-                         var newUser = AllContactCache.SingleOrDefault(o => o.UserName == user);
-                         if (newUser == null) return;
+            {
+                foreach (var item in items)
+                {
+                    foreach (var user in new[] { item.From, item.To })
+                    {
+                        var newUser = AllContactList.SingleOrDefault(o => o.UserName == user);
+                        if (newUser == null)
+                        {
+                            var newUserSearchInAllContact = AllContactCache.SingleOrDefault(o => o.UserName == user);
+                            if (newUserSearchInAllContact == null) return;
+                            newUser = new WXUserViewModel
+                            {
+                                DisplayName = newUserSearchInAllContact.ShowName,
+                                HeadImgUrl = newUserSearchInAllContact.HeadImgUrl,
+                                UserName = newUserSearchInAllContact.UserName,
+                                UserType = newUserSearchInAllContact.UserType
+                            };
+                        }
 
-                         SynchronizationContext.Post((p) =>
-                         {
-                             lock(RecentContactList)
-                             WXService.RecentContactList.Add(new WXUserViewModel
-                             {
-                                 DisplayName = newUser.ShowName,
-                                 HeadImgUrl = newUser.HeadImgUrl,
-                                 UserName = newUser.UserName,
-                                 UserType = newUser.UserType
-                             });
-                         }, null);
-                     }
-             });
+                        SynchronizationContext.Post((p) =>
+                        {
+                            if (RecentContactList.Any(o => o.UserName == newUser.UserName)) return;
+                            WXService.RecentContactList.Add(newUser);
+                        }, null);
+                    }
+
+                    // must use SynchronizationContext
+                    SynchronizationContext.Post(p =>
+                    {
+                        var user = RecentContactList
+                            .FirstOrDefault(o => new[] { item.From, item.To }.Any(k => k == o.UserName)
+                            && o.UserName != Me.UserName);
+
+                        var status = UpdateMsgToWxUsering?.Invoke(user, item);
+                        if (status == false) return;
+                        user.Messages.Add(item);
+                    }, null);
+                }
+
+            });
         }
         /// <summary>
         /// 监听消息，注意，这会阻塞当前进程

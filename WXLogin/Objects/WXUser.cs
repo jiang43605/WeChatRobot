@@ -11,6 +11,7 @@ namespace WXLogin
     /// </summary>
     public class WXUser
     {
+        private static readonly List<WXMsg> Messages = new List<WXMsg>();
         // 用户类型
         public UserType UserType { set; get; }
         // 子用户，用于讨论组
@@ -147,6 +148,7 @@ namespace WXLogin
                 _remarkPYQuanPin = value;
             }
         }
+
         //头像
         private bool _loading_icon = false;
         private byte[] _icon;

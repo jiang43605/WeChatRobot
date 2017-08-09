@@ -21,6 +21,7 @@ namespace WxRobot
     {
         private WXService _wxSerivice;
         private string _arg;
+        private Dictionary<string, Window> _chatWindowsDic;
         public MainWindow()
         {
             InitializeComponent();
@@ -33,6 +34,15 @@ namespace WxRobot
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            _chatWindowsDic = new Dictionary<string, Window>();
+            var musicFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources\\msg.mp3");
+
+            if (File.Exists(musicFile))
+            {
+                Console.WriteLine("init music file: " + musicFile);
+                playBox.Source = new Uri(musicFile);
+            }
+
             Init();
         }
 
@@ -159,6 +169,21 @@ namespace WxRobot
             WXService.AllContactList.CollectionChanged += UpdateImage;
 
             _wxSerivice.InitData();
+            _wxSerivice.UpdateMsgToWxUsering += _wxSerivice_UpdateMsgToWxUsering;
+        }
+
+        /// <summary>
+        /// when opens a child chat window and a new message is delivered to the user, 
+        /// the message is marked as read
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="msg"></param>
+        /// <returns></returns>
+        private bool _wxSerivice_UpdateMsgToWxUsering(WXUserViewModel user, WXMsg msg)
+        {
+            if (_chatWindowsDic.ContainsKey(user.UserName))
+                msg.Readed = true;
+            return true;
         }
 
         private void UpdateImage(object sender, NotifyCollectionChangedEventArgs e)
@@ -218,7 +243,7 @@ namespace WxRobot
                 string reMsg;
                 var msg = item.Msg;
 
-                PrintLin($"[{item.FromNickName}] - [{item.ToNickName}] - {DateTime.Now}");
+                PrintLin($"[{item.FromNickName}] - [{item.ToNickName}] - {item.Time}");
                 PrintLin($"Msg: {msg}");
 
                 if (item.From.Equals(_wxSerivice.Me.UserName))
@@ -239,6 +264,13 @@ namespace WxRobot
                 }
                 else
                 {
+                    // play music
+                    Dispatcher.InvokeAsync(() =>
+                    {
+                        playBox.Position = TimeSpan.FromSeconds(0);
+                        if (isOpenMsgMusic.IsChecked == true) playBox.Play();
+                    });
+
                     // find the specify user rule, if aleady store in Rule.Rules
                     var user = Rule.Rules.Keys.FirstOrDefault(o => o.UserName == item.From);
                     if (user == null)
@@ -414,6 +446,34 @@ namespace WxRobot
             {
                 item.IsCheck = !(item.IsCheck ?? false);
             }
+        }
+        private void Button_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var control = sender as Button;
+            var user = control.GetBindingExpression(ContentProperty).DataItem as WXUserViewModel;
+
+            //if (user.Messages.Count == 0) return;
+            foreach (var item in user.Messages)
+            {
+                item.Readed = true;
+            }
+            user.DoPropertyChanged(nameof(user.Messages));
+
+            if (_chatWindowsDic.ContainsKey(user.UserName))
+            {
+
+                _chatWindowsDic[user.UserName].Activate();
+                return;
+            }
+
+            var chatWindow = new Chat(user);
+            _chatWindowsDic.Add(user.UserName, chatWindow);
+            chatWindow.Closed += (a, b) =>
+            {
+                _chatWindowsDic.Remove(user.UserName);
+            };
+
+            chatWindow.Show();
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using WXLogin;
 
@@ -34,7 +36,60 @@ namespace WxRobot
         }
     }
 
-    public class VisiableConvert:IValueConverter
+    public class MessageFormatConvert : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var msgs = (ObservableCollection<WXMsg>)value;
+
+            var rmsg = string.Empty;
+            foreach (var item in msgs)
+            {
+                rmsg += $"[{item.FromNickName}]-[{item.ToNickName}]-[{item.Time}]\r\n"
+                        + item.Msg + "\r\n\r\n";
+            }
+
+            return rmsg;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public class MessageCountConvert : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var msgs = (ObservableCollection<WXMsg>)value;
+
+            var num = msgs.Count(o => o.From != WXService.Instance.Me.UserName && o.Readed != true);
+            return num == 0 ? "[ 点击聊天 ]" : $"[ {num} ]";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class ContentToForegroundConvert : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (!(value is string)) return Brushes.DarkTurquoise;
+
+            var str = (string)value;
+            if (str == "[ 点击聊天 ]") return Brushes.DarkTurquoise;
+            return Brushes.Red;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public class VisiableConvert : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -43,11 +98,11 @@ namespace WxRobot
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return ((Visibility) value) == Visibility.Hidden ? false : true;
+            return ((Visibility)value) == Visibility.Hidden ? false : true;
         }
     }
 
-    public class CheckComparer : IEqualityComparer<WXLogin.WXUserViewModel>    
+    public class CheckComparer : IEqualityComparer<WXLogin.WXUserViewModel>
     {
         public bool Equals(WXUserViewModel x, WXUserViewModel y)
         {

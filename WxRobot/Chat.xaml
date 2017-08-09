@@ -1,0 +1,20 @@
+﻿<Window x:Class="WxRobot.Chat"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WxRobot"
+        mc:Ignorable="d"
+        Title="chat" Height="300" Width="467.2" Closed="Window_Closed" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <local:MessageFormatConvert x:Key="msgFormatConvert"></local:MessageFormatConvert>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="25"></RowDefinition>
+        </Grid.RowDefinitions>
+        <TextBox x:Name="print" Grid.Row="0" Margin="0" AcceptsReturn="True" TextWrapping="WrapWithOverflow" Text="{Binding Path=Messages, Mode=OneWay, Converter={StaticResource msgFormatConvert}}" IsReadOnly="True" ScrollViewer.VerticalScrollBarVisibility="Auto" TextChanged="print_TextChanged"></TextBox>
+        <TextBox x:Name="input" Grid.Row="1" VerticalContentAlignment="Center" TextWrapping="NoWrap" KeyUp="TextBox_KeyUp"></TextBox>
+    </Grid>
+</Window>

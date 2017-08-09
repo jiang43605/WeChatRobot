@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Newtonsoft.Json.Linq;
 
@@ -45,11 +47,8 @@ namespace WXLogin
         /// <summary>
         /// 是否已读
         /// </summary>
-        public bool Readed
-        {
-            get;
-            set;
-        }
+        public bool Readed { get; set; }
+
         /// <summary>
         /// 消息内容
         /// </summary>

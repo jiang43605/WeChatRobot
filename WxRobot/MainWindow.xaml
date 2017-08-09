@@ -4,10 +4,13 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WxRobot"
+        xmlns:properties="clr-namespace:WxRobot.Properties"
         mc:Ignorable="d"
         Title="wechatRobot" WindowStartupLocation="CenterScreen" Height="600" Width="800"   Loaded="Window_Loaded" Closed="Window_Closed">
     <Window.Resources>
         <local:VisiableConvert x:Key="visiableConvert"></local:VisiableConvert>
+        <local:MessageCountConvert x:Key="msgConvert"></local:MessageCountConvert>
+        <local:ContentToForegroundConvert x:Key="contentToForegroundConvert"></local:ContentToForegroundConvert>
         <Style x:Key="linkLable" TargetType="Label">
             <Setter Property="Foreground" Value="Gray"></Setter>
             <Style.Triggers>
@@ -24,6 +27,7 @@
                 <DockPanel>
                     <Image Margin="0 1 0 3" Source="{Binding Path=BitMapImage}"></Image>
                     <Label Padding="0" Content="{Binding Path=DisplayName}" Foreground="{Binding Path=FontColor}"></Label>
+                    <Button Background="{x:Null}" BorderThickness="0" Padding="0" Margin="3 0 0 7" HorizontalContentAlignment="Left" Content="{Binding Path=Messages, Mode=OneWay,  Converter={StaticResource msgConvert}}" Focusable="False" Foreground="{Binding RelativeSource={RelativeSource Mode=Self}, Path=Content,Mode=OneWay, Converter={StaticResource contentToForegroundConvert}}" PreviewMouseLeftButtonUp="Button_PreviewMouseLeftButtonUp"></Button>
                 </DockPanel>
             </CheckBox>
         </DataTemplate>
@@ -69,10 +73,12 @@
                     </RadioButton>
                 </StackPanel>
             </Border>
-            <TextBox x:Name="print" IsReadOnly="True" TextWrapping="WrapWithOverflow" Foreground="Gray" Grid.Column="2" Grid.Row="2" Margin="20" Padding="10" ScrollViewer.CanContentScroll="True" ></TextBox>
+            <TextBox x:Name="print" IsReadOnly="True" TextWrapping="WrapWithOverflow" Foreground="Gray" Grid.Column="2" Grid.Row="2" Margin="20" Padding="10" ScrollViewer.CanContentScroll="True" ScrollViewer.VerticalScrollBarVisibility="Visible"></TextBox>
             <Button x:Name="startBtn" Grid.Row="3" Grid.ColumnSpan="3" Content="start" HorizontalAlignment="Center"  VerticalAlignment="Top" Width="175" Click="startBtn_Click"/>
             <Label Content="Rule List" Grid.Column="2" HorizontalAlignment="Left" Margin="20,0,0,0" VerticalAlignment="Center"/>
             <Label Content="Friend List" Grid.Column="0" HorizontalAlignment="Left" Margin="20,0,0,0" VerticalAlignment="Center"/>
+            <CheckBox x:Name="isOpenMsgMusic" Grid.Row="2" Height="15"  VerticalAlignment="Top" HorizontalContentAlignment="Left" VerticalContentAlignment="Center" BorderBrush="Gray" Content="开启消息铃声通知" Grid.Column="2" Margin="250,0,25,0"/>
+            <MediaElement x:Name="playBox" Visibility="Hidden" LoadedBehavior="Manual" UnloadedBehavior="Stop" Volume="1"></MediaElement>
         </Grid>
     </Grid>
 </Window>
