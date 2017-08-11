@@ -53,20 +53,6 @@ namespace WxRobot
                 var from = WXService.Instance.Me.UserName;
                 var to = User.UserName;
                 var msg = input.Text;
-                var fromNickName = WXService.Instance.GetNickName(from, msg);
-                var toNickName = WXService.Instance.GetNickName(from, msg);
-
-                User.Messages.Add(new WXMsg
-                {
-                    From = from,
-                    To = to,
-                    Msg = msg,
-                    Type = 1,
-                    FromNickName = fromNickName,
-                    ToNickName = toNickName,
-                    Time = DateTime.Now,
-                    Readed = true
-                });
 
                 WXService.Instance.SendMsgAsync(msg, from, to, 1);
                 this.input.Clear();

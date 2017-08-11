@@ -35,6 +35,17 @@ namespace WxRobot
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             _chatWindowsDic = new Dictionary<string, Window>();
+
+            LoadPalyBoxSource();
+
+            Init();
+        }
+
+        /// <summary>
+        /// init music for new msg
+        /// </summary>
+        private void LoadPalyBoxSource()
+        {
             var musicFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources\\msg.mp3");
 
             if (File.Exists(musicFile))
@@ -42,10 +53,7 @@ namespace WxRobot
                 Console.WriteLine("init music file: " + musicFile);
                 playBox.Source = new Uri(musicFile);
             }
-
-            Init();
         }
-
         private async void Init()
         {
             if (_arg == "plugin")
@@ -78,8 +86,6 @@ namespace WxRobot
                 // handle the msg
                 OpenListening();
             }
-
-
         }
         private async Task<bool> InitLoginAsync()
         {
@@ -114,8 +120,10 @@ namespace WxRobot
                      }
                      else if (loginResult is string)
                      {
-                         ls.GetSidUid(loginResult as string);
-                         break;
+                         if (ls.GetSidUid(loginResult as string)) break;
+
+                         MessageBox.Show("当前环境存在异常！登录失败！");
+                         Environment.Exit(0);
                      }
                  }
              });
@@ -223,8 +231,12 @@ namespace WxRobot
                     // set SendMsg value
                     tp.GetProperty("SendMsg")?.SetValue(obj, new Action<string, string>((to, msg) =>
                     {
-                        PrintLin($"[{_wxSerivice.Me.ShowName}] - [{_wxSerivice.GetNickName(to, msg)}] - {DateTime.Now}");
+                        var fromNickName = WXService.Instance.Me.ShowName;
+                        var toNickName = _wxSerivice.GetNickName(to, msg);
+
+                        PrintLin($"[{fromNickName}] - [{toNickName}] - {DateTime.Now}");
                         PrintLin($"Msg: {msg}\r\n");
+
                         _wxSerivice.SendMsgAsync(msg, _wxSerivice.Me.UserName, to, 1);
                     }));
 
@@ -264,12 +276,7 @@ namespace WxRobot
                 }
                 else
                 {
-                    // play music
-                    Dispatcher.InvokeAsync(() =>
-                    {
-                        playBox.Position = TimeSpan.FromSeconds(0);
-                        if (isOpenMsgMusic.IsChecked == true) playBox.Play();
-                    });
+                    PlayMsgMusic();
 
                     // find the specify user rule, if aleady store in Rule.Rules
                     var user = Rule.Rules.Keys.FirstOrDefault(o => o.UserName == item.From);
@@ -345,7 +352,22 @@ namespace WxRobot
             Print(msg + "\r\n");
         }
 
-
+        /// <summary>
+        /// play the music when new msg come on
+        /// </summary>
+        private void PlayMsgMusic()
+        {
+            // play music
+            Dispatcher.InvokeAsync(() =>
+            {
+                playBox.Position = TimeSpan.FromSeconds(0);
+                if (playBox.Source == null)
+                {
+                    LoadPalyBoxSource();
+                }
+                if (playBox.Source != null && isOpenMsgMusic.IsChecked == true) playBox.Play();
+            });
+        }
         private void startBtn_Click(object sender, RoutedEventArgs e)
         {
             var rule = (Rule)null;
@@ -461,7 +483,6 @@ namespace WxRobot
 
             if (_chatWindowsDic.ContainsKey(user.UserName))
             {
-
                 _chatWindowsDic[user.UserName].Activate();
                 return;
             }

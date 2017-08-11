@@ -65,11 +65,13 @@ namespace WXLogin
         /// <summary>
         /// 获取sid uid   结果存放在cookies中
         /// </summary>
-        public void GetSidUid(string login_redirect)
+        public bool GetSidUid(string login_redirect)
         {
             byte[] bytes = BaseService.SendGetRequest(login_redirect + "&fun=new&version=v2&lang=zh_CN");
             string pass_ticket = Encoding.UTF8.GetString(bytes);
             Pass_Ticket = pass_ticket.Split(new string[] { "pass_ticket" }, StringSplitOptions.None)[1].TrimStart('>').TrimEnd('<', '/');
+            if (Pass_Ticket.Contains("当前登录环境异常")) return false;
+
             SKey = pass_ticket.Split(new string[] { "skey" }, StringSplitOptions.None)[1].TrimStart('>').TrimEnd('<', '/');
 
             BaseService.SetCookie("pgv_pvi", GetPgv());
@@ -89,6 +91,8 @@ namespace WXLogin
                 var time = (long)(DateTime.Now.ToUniversalTime() - new System.DateTime(1970, 1, 1)).TotalMilliseconds;
                 BaseService.SetCookie("wxloadtime", time.ToString().Substring(0, 10) /*+ "_expired"*/);
             }
+
+            return true;
         }
 
         private string GetPgv(string str = "")

@@ -51,6 +51,7 @@ namespace WXLogin
         public const string _loginOut_url = "https://wx.qq.com/cgi-bin/mmwebwx-bin/webwxlogout?redirect=1&type=0&skey=";
 
         public event Func<WXUserViewModel, WXMsg, bool> UpdateMsgToWxUsering;
+        public event Func<WXUserViewModel, bool> UpdateRecentContactListing;
         public static WXService Instance
         {
             get
@@ -609,6 +610,23 @@ namespace WXLogin
 
             if (sid != null && uin != null)
             {
+                var fromNickName = Me.ShowName;
+                var toNickName = GetNickName(from, msg);
+
+                var msgItem = new WXMsg
+                {
+                    From = from,
+                    To = to,
+                    Msg = msg,
+                    Type = type,
+                    FromNickName = fromNickName,
+                    ToNickName = toNickName,
+                    Time = DateTime.Now,
+                    Readed = true
+                };
+
+                UpdateLatestContactAsync(new[] { msgItem });
+
                 msg_json = string.Format(msg_json, sid.Value, uin.Value, msg, from, to, type, LoginService.SKey, DateTime.Now.Millisecond, DateTime.Now.Millisecond, DateTime.Now.Millisecond);
 
                 /*byte[] bytes = */
@@ -720,7 +738,7 @@ namespace WXLogin
         /// update the RecentContactList by msg
         /// </summary>
         /// <param name="items"></param>
-        private async void UpdateLatestContactAsync(IEnumerable<WXMsg> items)
+        public async void UpdateLatestContactAsync(IEnumerable<WXMsg> items)
         {
             await Task.Run(() =>
             {
@@ -728,6 +746,7 @@ namespace WXLogin
                 {
                     foreach (var user in new[] { item.From, item.To })
                     {
+                        if (RecentContactList.Any(o => o.UserName == user)) continue;
                         var newUser = AllContactList.SingleOrDefault(o => o.UserName == user);
                         if (newUser == null)
                         {
@@ -742,9 +761,10 @@ namespace WXLogin
                             };
                         }
 
-                        SynchronizationContext.Post((p) =>
+                        SynchronizationContext.Post(p =>
                         {
                             if (RecentContactList.Any(o => o.UserName == newUser.UserName)) return;
+                            if (UpdateRecentContactListing?.Invoke(newUser) != true) return;
                             WXService.RecentContactList.Add(newUser);
                         }, null);
                     }
@@ -758,7 +778,8 @@ namespace WXLogin
 
                         var status = UpdateMsgToWxUsering?.Invoke(user, item);
                         if (status == false) return;
-                        user.Messages.Add(item);
+                        user?.Messages.Add(item);
+
                     }, null);
                 }
 

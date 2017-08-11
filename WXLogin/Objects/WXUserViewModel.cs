@@ -36,7 +36,8 @@ namespace WXLogin
                        .ToList()
                        .ForEach(o =>
                         {
-                            var userItem = WXService.RecentContactList.Single(k => k.UserName == o);
+                            var userItem = WXService.RecentContactList.SingleOrDefault(k => k.UserName == o);
+                            if (userItem == null) return;
                             var index = WXService.RecentContactList.IndexOf(userItem);
                             WXService.RecentContactList.Move(index, 0);
                         });
