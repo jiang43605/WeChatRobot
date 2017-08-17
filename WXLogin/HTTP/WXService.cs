@@ -773,8 +773,7 @@ namespace WXLogin
                     SynchronizationContext.Post(p =>
                     {
                         var user = RecentContactList
-                            .FirstOrDefault(o => new[] { item.From, item.To }.Any(k => k == o.UserName)
-                            && o.UserName != Me.UserName);
+                            .FirstOrDefault(o => new[] { item.From, item.To }.Where(k => k != Me.UserName).Any(k => k == o.UserName));
 
                         var status = UpdateMsgToWxUsering?.Invoke(user, item);
                         if (status == false) return;
