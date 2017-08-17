@@ -746,6 +746,7 @@ namespace WXLogin
                 {
                     foreach (var user in new[] { item.From, item.To })
                     {
+                        Console.WriteLine("update user: " + user);
                         if (RecentContactList.Any(o => o.UserName == user)) continue;
                         var newUser = AllContactList.SingleOrDefault(o => o.UserName == user);
                         if (newUser == null)
@@ -761,11 +762,14 @@ namespace WXLogin
                             };
                         }
 
+                        Console.WriteLine("update user begin: " + newUser.DisplayName + ";" + newUser.UserName);
                         SynchronizationContext.Post(p =>
                         {
                             if (RecentContactList.Any(o => o.UserName == newUser.UserName)) return;
-                            if (UpdateRecentContactListing?.Invoke(newUser) != true) return;
+                            var eventResult = UpdateRecentContactListing?.Invoke(newUser);
+                            if (eventResult != null && eventResult != true) return;
                             WXService.RecentContactList.Add(newUser);
+                            Console.WriteLine("update user complete: " + newUser.DisplayName + ";" + newUser.UserName);
                         }, null);
                     }
 
@@ -774,7 +778,6 @@ namespace WXLogin
                     {
                         var user = RecentContactList
                             .FirstOrDefault(o => new[] { item.From, item.To }.Where(k => k != Me.UserName).Any(k => k == o.UserName));
-
                         var status = UpdateMsgToWxUsering?.Invoke(user, item);
                         if (status == false) return;
                         user?.Messages.Add(item);
