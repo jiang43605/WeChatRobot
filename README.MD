@@ -2,7 +2,7 @@
 
 ## 微信机器人
 
-> 用于自动回复，定时发送，对接AI机器人等，运行在window平台下的可视化程序，主要是自用，项目写的较为简陋，因此，可能在使用时可能有一些莫名的异常。。。如果你在使用且不走运的遇到bug，请自己修复。。。不过大体还是能运行正常的。
+> 用于自动回复，定时发送，对接AI机器人等，运行在window平台下的可视化程序，主要是自用，项目写的较为简陋，因此，可能在使用时可能有一些莫名的异常，那么请告知我。
 
 ### 引用
 
@@ -48,8 +48,6 @@ msg:消息
 | MsgHandle | `string MsgHandle(string userName, string msg, int type, int userType)` | 方法，当该用户发消息过来，调用该方法，`type`表示消息类型，请上网查阅具体含义 |
 | BingDing | `void BingDing(string userName, int userType)` | 方法，用户第一次应用该规则时触发 |
 | FromMe | `string FromMe(string userName, string msg, int type, int userType)` | 方法，当用户自己从其它设备上回复消息时，触发该方法 |
-
-**以上接口不强制要求写，不保证接口稳定，如果编写的扩展代码逻辑错误或抛出异常，可能导致主界面崩溃。。。排查时请考虑主程序代码有bug**
 
 ### 更新与问题
 
